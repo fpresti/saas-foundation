@@ -200,8 +200,7 @@ src/
 - Features: Self-contained domain logic.
 - Shared: Reusable non-core UI elements.
 - Use separate .html and .ts files for components.
-- Do not use inline templates unless explicitly requested.
-
+- Inline templates are forbidden unless explicitly requested.
 
 ------------------------------------------------------------------------
 

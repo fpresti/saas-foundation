@@ -4,6 +4,9 @@ priority: high
 scope: project
 ---
 
+This project must follow the architecture defined in AI_PLAYBOOK.md at the repository root.
+If conflicts arise, AI_PLAYBOOK.md takes precedence.
+
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
 ## TypeScript Best Practices
@@ -33,7 +36,8 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Use `input()` and `output()` functions instead of decorators
 - Use `computed()` for derived state
 - Set `changeDetection: ChangeDetectionStrategy.OnPush` in `@Component` decorator
-- Prefer inline templates for small components
+- Use separate .html and .ts files for components.
+- Inline templates are forbidden unless explicitly requested.
 - Prefer Reactive forms instead of Template-driven ones
 - Do NOT use `ngClass`, use `class` bindings instead
 - Do NOT use `ngStyle`, use `style` bindings instead
@@ -50,8 +54,8 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 
 - Keep templates simple and avoid complex logic
 - Use native control flow (`@if`, `@for`, `@switch`) instead of `*ngIf`, `*ngFor`, `*ngSwitch`
-- Use the async pipe to handle observables
-- Do not assume globals like (`new Date()`) are available.
+- Prefer Promises for data fetching in services. If Observables are used, prefer async pipe over manual subscriptions.
+- Avoid non-deterministic values in templates (e.g., calling Date.now()). Compute them in the component/store instead.
 - Do not write arrow functions in templates (they are not supported).
 
 ## Services
