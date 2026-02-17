@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { getSupabaseClient } from '../supabase/supabase.client';
 import { NormalizedError, normalizeError } from '../utils/supabase-error.util';
-import { Tenant, TenantMembership } from './tenant.types';
+import { Tenant } from './tenant.types';
 
 @Injectable({ providedIn: 'root' })
 export class TenantService {
@@ -15,13 +15,13 @@ export class TenantService {
 
     const { data, error } = await this.supabase
       .from('platform_users')
-      .select('role')
+      .select('platform_role')
       .eq('user_id', user.id)
       .maybeSingle();
 
     const normalized = normalizeError(error);
     if (normalized) throw normalized;
-    if (data?.role === 'super_admin') return 'super_admin';
+    if (data?.platform_role === 'super_admin') return 'super_admin';
     return null;
   }
 
@@ -39,9 +39,14 @@ export class TenantService {
     const normalized = normalizeError(error);
     if (normalized) throw normalized;
 
-    const rows = (data ?? []) as unknown as TenantMembership[];
+    type MembershipRow = NonNullable<typeof data>[number];
+    const rows: MembershipRow[] = data ?? [];
     return rows
-      .map((r) => (Array.isArray(r.tenants) ? r.tenants[0] ?? null : null))
+      .map((r): Tenant | null => {
+        const t = r.tenants;
+        if (t && typeof t === 'object' && 'id' in t && 'name' in t) return t;
+        return null;
+      })
       .filter((t): t is Tenant => t !== null);
   }
 
