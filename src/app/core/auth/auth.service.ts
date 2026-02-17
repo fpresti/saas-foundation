@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Session } from '@supabase/supabase-js';
 import { getSupabaseClient } from '../supabase/supabase.client';
-import { NormalizedError, normalizeAuthError } from '../utils/supabase-error.util';
+import { NormalizedError, normalizeAuthError, normalizeError } from '../utils/supabase-error.util';
 
 export type SignInResult =
   | { session: Session | null}
@@ -53,6 +53,26 @@ export class AuthService {
   async signOut(): Promise<SignOutResult> {
     const { error } = await this.supabase.auth.signOut();
     const normalized = normalizeAuthError(error);
+    if (normalized) return { error: normalized };
+    return {};
+  }
+
+  /** Send password recovery email. Redirects to reset-password after user clicks link. */
+  async sendPasswordRecovery(email: string): Promise<{ error?: NormalizedError }> {
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`
+    });
+    const normalized = normalizeError(error);
+    if (normalized) return { error: normalized };
+    return {};
+  }
+
+  /** Update password (requires valid session, e.g. from recovery link). */
+  async updatePassword(newPassword: string): Promise<{ error?: NormalizedError }> {
+    const { error } = await this.supabase.auth.updateUser({
+      password: newPassword
+    });
+    const normalized = normalizeError(error);
     if (normalized) return { error: normalized };
     return {};
   }
