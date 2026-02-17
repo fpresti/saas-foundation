@@ -1,3 +1,32 @@
-/* You can add global styles to this file, and also import other style files */
-
 @import "tailwindcss";
+
+/* Light theme */
+:root {
+  --color-bg-primary: #fafafa;
+  --color-bg-secondary: #ffffff;
+  --color-border-default: #e5e7eb;
+
+  --color-primary-500: #2d4b8b;
+  --color-primary-700: #14213d;
+
+  --color-text-primary: #000000;
+  --color-text-secondary: #ffffff;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --color-bg-primary: #0f172a;
+  --color-bg-secondary: #1e293b;
+  --color-border-default: #334155;
+
+  --color-primary-500: #006d77;
+  --color-primary-700: #00545c;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+}

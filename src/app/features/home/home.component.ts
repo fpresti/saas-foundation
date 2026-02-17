@@ -13,7 +13,7 @@ export class HomeComponent {
   readonly authStore = inject(AuthStore);
 
   async signOut(): Promise<void> {
-    this.authStore.mockSignOut();
+    await this.authStore.signOut();
     await this.router.navigateByUrl('/login');
   }
 }

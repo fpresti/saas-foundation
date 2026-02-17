@@ -1,0 +1,22 @@
+<div>
+  <h1>Select tenant</h1>
+
+  @if (tenantStore.error(); as err) {
+    <p role="alert">{{ err.message }}</p>
+  }
+
+  @if (tenantStore.availableTenants().length === 0) {
+    <p>No tenants available.</p>
+  } @else {
+    <ul>
+      @for (tenant of tenantStore.availableTenants(); track tenant.id) {
+        <li>
+          <span>{{ tenant.name }}</span>
+          <button type="button" (click)="selectTenant(tenant.id)">
+            Select
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</div>
