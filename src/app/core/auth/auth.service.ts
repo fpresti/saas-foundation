@@ -57,6 +57,32 @@ export class AuthService {
     return {};
   }
 
+  /** Sign up with magic link (OTP). User enters email, clicks link, returns to app authenticated. */
+  async signUpWithMagicLink(email: string): Promise<{ error?: NormalizedError }> {
+    const { error } = await this.supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`
+      }
+    });
+    const normalized = normalizeError(error);
+    if (normalized) return { error: normalized };
+    return {};
+  }
+
+  /** Send magic link to email. User clicks link and returns to app authenticated. */
+  async sendMagicLink(email: string): Promise<{ error?: NormalizedError }> {
+    const { error } = await this.supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login`
+      }
+    });
+    const normalized = normalizeError(error);
+    if (normalized) return { error: normalized };
+    return {};
+  }
+
   /** Send password recovery email. Redirects to reset-password after user clicks link. */
   async sendPasswordRecovery(email: string): Promise<{ error?: NormalizedError }> {
     const { error } = await this.supabase.auth.resetPasswordForEmail(email, {

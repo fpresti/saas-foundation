@@ -1,6 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { AuthStore } from '../../core/auth/auth.store';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
   selector: 'app-home',
@@ -8,12 +6,4 @@ import { AuthStore } from '../../core/auth/auth.store';
   templateUrl: './home.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent {
-  private readonly router = inject(Router);
-  readonly authStore = inject(AuthStore);
-
-  async signOut(): Promise<void> {
-    await this.authStore.signOut();
-    await this.router.navigateByUrl('/login');
-  }
-}
+export class HomeComponent {}
