@@ -15,7 +15,7 @@ import { AuthStore } from '../../core/auth/auth.store';
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
-  private readonly authStore = inject(AuthStore);
+  readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
 
   constructor() {
@@ -26,12 +26,32 @@ export class LoginComponent {
     });
   }
 
+  readonly mode = signal<'magic' | 'password'>('magic');
   readonly magicSuccess = signal(false);
   readonly magicError = signal<NormalizedError | null>(null);
 
   readonly magicForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]]
   });
+
+  readonly form = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required]
+  });
+
+  get email() {
+    return this.form.controls.email;
+  }
+
+  get password() {
+    return this.form.controls.password;
+  }
+
+  setMode(m: 'magic' | 'password'): void {
+    this.mode.set(m);
+    this.magicSuccess.set(false);
+    this.magicError.set(null);
+  }
 
   async sendMagicLink(): Promise<void> {
     if (this.magicForm.invalid) return;
@@ -44,5 +64,16 @@ export class LoginComponent {
       return;
     }
     this.magicSuccess.set(true);
+  }
+
+  async signInWithPassword(): Promise<void> {
+    if (this.form.invalid) return;
+    const ok = await this.authStore.signIn(
+      this.form.getRawValue().email,
+      this.form.getRawValue().password
+    );
+    if (ok) {
+      await this.router.navigateByUrl('/');
+    }
   }
 }

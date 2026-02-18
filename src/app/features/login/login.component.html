@@ -3,34 +3,89 @@
     <div class="w-full max-w-sm rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6">
       <h1 class="text-2xl font-bold">Login</h1>
 
-      <form class="mt-4 space-y-4" [formGroup]="magicForm" (ngSubmit)="sendMagicLink()">
-        <div>
-          <label for="login-magic-email" class="block text-sm">Email</label>
-          <input
-            id="login-magic-email"
-            type="email"
-            formControlName="email"
-            autocomplete="email"
-            class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
-          />
-        </div>
-        @if (magicSuccess()) {
-          <p class="text-sm" role="status">Check your email to continue.</p>
-        }
-        @if (magicError(); as err) {
-          <p class="text-sm" role="alert">{{ err.message }}</p>
-        }
+      <div class="mt-4 flex gap-2">
         <button
-          type="submit"
-          [disabled]="magicForm.invalid"
-          class="w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2 disabled:opacity-50"
+          type="button"
+          (click)="setMode('magic')"
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-1.5 text-sm"
         >
-          Send magic link
+          Magic link
         </button>
-      </form>
-      <p class="mt-4 text-sm">
-        <a routerLink="/sign-up" class="underline">Create account</a>
-      </p>
+        <button
+          type="button"
+          (click)="setMode('password')"
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-1.5 text-sm"
+        >
+          Password
+        </button>
+      </div>
+
+      @if (mode() === 'magic') {
+        <form class="mt-4 space-y-4" [formGroup]="magicForm" (ngSubmit)="sendMagicLink()">
+          <div>
+            <label for="login-magic-email" class="block text-sm">Email</label>
+            <input
+              id="login-magic-email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
+            />
+          </div>
+          @if (magicSuccess()) {
+            <p class="text-sm" role="status">Check your email to continue.</p>
+          }
+          @if (magicError(); as err) {
+            <p class="text-sm" role="alert">{{ err.message }}</p>
+          }
+          <button
+            type="submit"
+            [disabled]="magicForm.invalid"
+            class="w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2 disabled:opacity-50"
+          >
+            Send magic link
+          </button>
+        </form>
+        <p class="mt-4 text-sm">
+          <a routerLink="/sign-up" class="underline">Create account</a>
+        </p>
+      } @else {
+        @if (authStore.signInError(); as err) {
+          <p class="mt-2 text-sm" role="alert">{{ err.message }}</p>
+        }
+        <form class="mt-4 space-y-4" [formGroup]="form" (ngSubmit)="signInWithPassword()">
+          <div>
+            <label for="login-email" class="block text-sm">Email</label>
+            <input
+              id="login-email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
+            />
+          </div>
+          <div>
+            <label for="login-password" class="block text-sm">Password</label>
+            <input
+              id="login-password"
+              type="password"
+              formControlName="password"
+              autocomplete="current-password"
+              class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
+            />
+          </div>
+          <button
+            type="submit"
+            [disabled]="form.invalid"
+            class="w-full rounded bg-[var(--color-primary-500)] text-[var(--color-text-secondary)] p-2 hover:bg-[var(--color-primary-700)] disabled:opacity-50"
+          >
+            Sign in
+          </button>
+          <p class="text-center text-sm">
+            <a routerLink="/forgot-password">Forgot password?</a>
+          </p>
+        </form>
+      }
     </div>
   </div>
 </section>
