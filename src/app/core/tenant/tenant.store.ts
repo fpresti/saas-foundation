@@ -13,6 +13,7 @@ export class TenantStore {
 
   readonly availableTenants = signal<Tenant[]>([]);
   readonly activeTenant = signal<Tenant | null>(null);
+  readonly platformRole = signal<'super_admin' | null>(null);
   readonly isLoading = signal<boolean>(true);
   readonly error = signal<NormalizedError | null>(null);
 
@@ -39,10 +40,12 @@ export class TenantStore {
       if (!this.authStore.isAuthenticated()) {
         this.availableTenants.set([]);
         this.activeTenant.set(null);
+        this.platformRole.set(null);
         return;
       }
 
       const platformRole = await this.tenantService.getMyPlatformRole();
+      this.platformRole.set(platformRole);
       let tenants: Tenant[];
 
       if (platformRole === 'super_admin') {
@@ -77,6 +80,7 @@ export class TenantStore {
       this.error.set(normalized);
       this.availableTenants.set([]);
       this.activeTenant.set(null);
+      this.platformRole.set(null);
     } finally {
       this.isLoading.set(false);
     }

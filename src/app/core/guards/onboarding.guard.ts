@@ -5,7 +5,7 @@ import { TenantStore } from '../tenant/tenant.store';
 /**
  * Use on routes that require at least one tenant (e.g. Home).
  * Do NOT apply to /select-tenant or /onboarding/create-tenant.
- * If authenticated and availableTenants.length === 0, redirects to /onboarding/create-tenant.
+ * Redirects to /onboarding/create-tenant only when user has no tenants AND is not super_admin.
  */
 export const onboardingGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
   const tenantStore = inject(TenantStore);
@@ -15,7 +15,10 @@ export const onboardingGuard: CanActivateFn = async (): Promise<boolean | UrlTre
     await tenantStore.initialize();
   }
 
-  if (tenantStore.availableTenants().length === 0) {
+  const hasNoTenants = tenantStore.availableTenants().length === 0;
+  const isSuperAdmin = tenantStore.platformRole() === 'super_admin';
+
+  if (hasNoTenants && !isSuperAdmin) {
     return router.createUrlTree(['/onboarding/create-tenant']);
   }
 
