@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { AppResetService } from '../../../core/services/app-reset.service';
 import { TenantStore } from '../../../core/tenant/tenant.store';
 import { NavigationService } from '../services/navigation.service';
 import type { NavSection } from '../types';
@@ -7,6 +8,11 @@ import type { NavSection } from '../types';
 export class NavigationStore {
   private readonly navigationService = inject(NavigationService);
   private readonly tenantStore = inject(TenantStore);
+  private readonly appReset = inject(AppResetService);
+
+  constructor() {
+    this.appReset.registerResettable('navigation', this);
+  }
 
   /** All navigation sections (Switch tenant only for super_admin with >1 tenant) */
   readonly sections = computed<readonly NavSection[]>(() => {
@@ -39,6 +45,11 @@ export class NavigationStore {
   /** Whether section is collapsed */
   isSectionCollapsed(sectionId: string): boolean {
     return Boolean(this.collapsedBySection()[sectionId]);
+  }
+
+  /** Reset state on tenant change. */
+  reset(): void {
+    this.collapsedBySection.set({});
   }
 
   /** Flattened nav items for rail (icon-only) */

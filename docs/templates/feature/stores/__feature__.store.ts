@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { AppResetService } from '../../../../src/app/core/services/app-reset.service';
 import type { NormalizedError } from '../../../../src/app/core/utils/supabase-error.util';
 import { __Feature__Service } from '../services/__feature__.service';
 import type { __Feature__Item } from '../types';
@@ -6,8 +7,19 @@ import type { __Feature__Item } from '../types';
 @Injectable({ providedIn: 'root' })
 export class __Feature__Store {
   private readonly __featureCamel__Service = inject(__Feature__Service);
+  private readonly appReset = inject(AppResetService);
 
   readonly state = signal<__Feature__Item[]>([]);
+
+  constructor() {
+    this.appReset.registerResettable('__feature__', this);
+  }
+
+  /** Reset tenant-scoped state on tenant change. */
+  reset(): void {
+    this.state.set([]);
+    this.error.set(null);
+  }
   readonly isLoading = signal<boolean>(false);
   readonly error = signal<NormalizedError | null>(null);
 
@@ -33,3 +45,4 @@ export class __Feature__Store {
     }
   }
 }
+

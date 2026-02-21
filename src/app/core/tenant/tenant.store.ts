@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { NormalizedError } from '../utils/supabase-error.util';
 import { AuthStore } from '../auth/auth.store';
+import { AppResetService } from '../services/app-reset.service';
 import { Tenant } from './tenant.types';
 import { TenantService } from './tenant.service';
 
@@ -10,6 +11,7 @@ const ACTIVE_TENANT_STORAGE_KEY = 'saas-foundation-active-tenant-id';
 export class TenantStore {
   private readonly authStore = inject(AuthStore);
   private readonly tenantService = inject(TenantService);
+  private readonly appReset = inject(AppResetService);
 
   readonly availableTenants = signal<Tenant[]>([]);
   readonly activeTenant = signal<Tenant | null>(null);
@@ -103,6 +105,7 @@ export class TenantStore {
     if (tenant) {
       this.activeTenant.set(tenant);
       this.setStoredActiveTenantId(tenantId);
+      this.appReset.resetAll();
     }
   }
 
