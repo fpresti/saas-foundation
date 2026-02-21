@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import type { NormalizedError } from '../../core/utils/supabase-error.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { AuthStore } from '../../core/auth/auth.store';
+import { TenantStore } from '../../core/tenant/tenant.store';
 
 @Component({
   selector: 'app-login',
@@ -16,6 +17,7 @@ export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   readonly authStore = inject(AuthStore);
+  private readonly tenantStore = inject(TenantStore);
   private readonly router = inject(Router);
 
   constructor() {
@@ -73,6 +75,7 @@ export class LoginComponent {
       this.form.getRawValue().password
     );
     if (ok) {
+      await this.tenantStore.initialize();
       await this.router.navigateByUrl('/');
     }
   }

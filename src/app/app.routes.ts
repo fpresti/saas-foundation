@@ -2,49 +2,49 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
-import { AppShellComponent } from './core/ui/app-shell.component';
-import { ForgotPasswordComponent } from './features/forgot-password/forgot-password.component';
-import { HomeComponent } from './features/home/home.component';
-import { LoginComponent } from './features/login/login.component';
-import { OnboardingCreateTenantComponent } from './features/onboarding-create-tenant/onboarding-create-tenant.component';
-import { ResetPasswordComponent } from './features/reset-password/reset-password.component';
-import { SignUpComponent } from './features/sign-up/sign-up.component';
-import { TenantSelectComponent } from './features/tenant-select/tenant-select.component';
+import { AppShellPageComponent } from './features/app-shell';
 
 export const routes: Routes = [
   {
     path: 'login',
-    component: LoginComponent
+    loadChildren: () =>
+      import('./features/login/routes').then(m => m.loginRoutes)
   },
   {
     path: 'sign-up',
-    component: SignUpComponent
+    loadChildren: () =>
+      import('./features/sign-up/routes').then(m => m.signUpRoutes)
   },
   {
     path: 'forgot-password',
-    component: ForgotPasswordComponent
+    loadChildren: () =>
+      import('./features/forgot-password/routes').then(m => m.forgotPasswordRoutes)
   },
   {
     path: 'reset-password',
-    component: ResetPasswordComponent
+    loadChildren: () =>
+      import('./features/reset-password/routes').then(m => m.resetPasswordRoutes)
   },
   {
     path: '',
-    canActivate: [authGuard],
-    component: AppShellComponent,
+    canActivate: [authGuard, tenantContextGuard],
+    component: AppShellPageComponent,
     children: [
       {
         path: 'select-tenant',
-        component: TenantSelectComponent
+        loadChildren: () =>
+          import('./features/tenant-select/routes').then(m => m.tenantSelectRoutes)
       },
       {
         path: 'onboarding/create-tenant',
-        component: OnboardingCreateTenantComponent
+        loadChildren: () =>
+          import('./features/onboarding-create-tenant/routes').then(m => m.onboardingCreateTenantRoutes)
       },
       {
         path: '',
-        canActivate: [onboardingGuard, tenantContextGuard],
-        component: HomeComponent
+        canActivate: [onboardingGuard],
+        loadChildren: () =>
+          import('./features/home/routes').then(m => m.homeRoutes)
       }
     ]
   },

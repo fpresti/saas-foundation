@@ -1,22 +1,32 @@
-<div>
-  <h1>Select tenant</h1>
+<section class="min-h-screen bg-[var(--color-bg-primary)]">
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div
+      class="w-full max-w-xl rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6"
+    >
+      <h1 class="text-2xl font-bold">Select tenant</h1>
 
-  @if (tenantStore.error(); as err) {
-    <p role="alert">{{ err.message }}</p>
-  }
-
-  @if (tenantStore.availableTenants().length === 0) {
-    <p>No tenants available.</p>
-  } @else {
-    <ul>
-      @for (tenant of tenantStore.availableTenants(); track tenant.id) {
-        <li>
-          <span>{{ tenant.name }}</span>
-          <button type="button" (click)="selectTenant(tenant.id)">
-            Select
-          </button>
-        </li>
+      @if (isLoading()) {
+        <p class="mt-4" role="status">Loading…</p>
+      } @else if (error(); as err) {
+        <p class="mt-4 text-sm" role="alert">{{ err.message }}</p>
+      } @else if (tenants().length === 0) {
+        <p class="mt-4">No tenants available.</p>
+        <a
+          routerLink="/onboarding/create-tenant"
+          class="mt-2 inline-block underline"
+          >Create a tenant</a
+        >
+      } @else {
+        <div class="mt-4">
+          <app-data-table
+            [rows]="rows()"
+            [columns]="columns"
+            [actions]="actions"
+            [selectedRowId]="activeId()"
+            emptyTitle="No tenants available"
+          />
+        </div>
       }
-    </ul>
-  }
-</div>
+    </div>
+  </div>
+</section>

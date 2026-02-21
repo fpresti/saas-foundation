@@ -7,22 +7,21 @@ import { Tenant } from './tenant.types';
 export class TenantService {
   private readonly supabase = getSupabaseClient();
 
-  /** Get current user's platform role. RLS enforces access. */
+  /** Get current user's platform role from super_admins table. RLS enforces access. */
   async getMyPlatformRole(): Promise<'super_admin' | null> {
     const { data: { session } } = await this.supabase.auth.getSession();
     const user = session?.user;
     if (!user) return null;
 
     const { data, error } = await this.supabase
-      .from('platform_users')
-      .select('platform_role')
+      .from('super_admins')
+      .select('user_id')
       .eq('user_id', user.id)
       .maybeSingle();
 
     const normalized = normalizeError(error);
     if (normalized) throw normalized;
-    if (data?.platform_role === 'super_admin') return 'super_admin';
-    return null;
+    return data != null ? 'super_admin' : null;
   }
 
   /** Get tenants the current user is a member of (tenant_users joined to tenants). */
@@ -41,10 +40,14 @@ export class TenantService {
 
     type MembershipRow = NonNullable<typeof data>[number];
     const rows: MembershipRow[] = data ?? [];
+    const roleMap = (r: string): NonNullable<Tenant['role']> =>
+      r === 'owner' || r === 'member' ? r : 'member';
     return rows
       .map((r): Tenant | null => {
-        const t = r.tenants;
-        if (t && typeof t === 'object' && 'id' in t && 'name' in t) return t;
+        const tenant = r.tenants;
+        if (tenant != null) {
+          return { id: tenant.id, name: tenant.name, role: roleMap(r.role) };
+        }
         return null;
       })
       .filter((t): t is Tenant => t !== null);
@@ -58,6 +61,6 @@ export class TenantService {
 
     const normalized = normalizeError(error);
     if (normalized) throw normalized;
-    return (data ?? []) as Tenant[];
+    return (data ?? []).map((t) => ({ ...t, role: 'super_admin' as const }));
   }
 }

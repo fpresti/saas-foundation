@@ -1,1 +1,12 @@
-<p>Protected area. Tenant context loaded.</p>
+<p class="mb-4">Protected area. Tenant context loaded.</p>
+
+<section class="max-w-3xl">
+  <h2 class="mb-3 text-lg font-semibold">Data table demo</h2>
+  <app-data-table
+    [rows]="demoRows"
+    [columns]="demoColumns"
+    [actions]="demoActions"
+    emptyTitle="No users"
+    emptyDescription="Add users to see them here."
+  />
+</section>

@@ -1,0 +1,42 @@
+<header class="flex h-14 shrink-0 items-center justify-between border-b border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4">
+  <div class="flex items-center gap-3">
+    <button
+      type="button"
+      (click)="layoutStore.openDrawer()"
+      class="rounded p-2 hover:bg-[var(--color-bg-primary)] md:hidden"
+      aria-label="Open navigation menu"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" x2="20" y1="12" y2="12" />
+        <line x1="4" x2="20" y1="6" y2="6" />
+        <line x1="4" x2="20" y1="18" y2="18" />
+      </svg>
+    </button>
+    <div class="truncate">
+      <span class="font-semibold">{{ activeTenantName() }}</span>
+      <span class="mx-1">·</span>
+      <span>{{ userName() }}</span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <ng-content />
+    @if (canSwitchTenant()) {
+      <button
+        type="button"
+        (click)="switchTenant()"
+        [disabled]="!hasActiveTenant()"
+        class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+      >
+        Switch tenant
+      </button>
+    }
+    <button
+      type="button"
+      (click)="signOut()"
+      class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+    >
+      Sign out
+    </button>
+  </div>
+</header>

@@ -43,7 +43,8 @@ export class AuthStore {
       return false;
     }
 
-    // Do not set session here; onAuthStateChange will update it.
+    // Set session immediately to avoid race: navigation happens before onAuthStateChange fires.
+    this.session.set(result.session);
     return true;
   }
 

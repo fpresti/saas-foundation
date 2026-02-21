@@ -61,6 +61,18 @@ export class TenantStore {
         ? tenants.find((t) => t.id === storedId)
         : null;
 
+      // Super_admin always goes through tenant selection (no auto-select)
+      if (platformRole === 'super_admin') {
+        if (storedTenant) {
+          this.activeTenant.set(storedTenant);
+          this.setStoredActiveTenantId(storedTenant.id);
+        } else {
+          this.activeTenant.set(null);
+          this.clearStoredActiveTenantId();
+        }
+        return;
+      }
+
       if (storedTenant) {
         this.activeTenant.set(storedTenant);
         this.setStoredActiveTenantId(storedTenant.id);

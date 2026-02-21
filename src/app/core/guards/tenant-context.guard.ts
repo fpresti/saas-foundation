@@ -11,6 +11,15 @@ export const tenantContextGuard: CanActivateFn = async (): Promise<boolean | Url
     await tenantStore.initialize();
   }
 
+  // Super_admin always must select a tenant before dashboard
+  if (
+    tenantStore.platformRole() === 'super_admin' &&
+    tenantStore.activeTenant() === null &&
+    tenantStore.availableTenants().length > 0
+  ) {
+    return router.createUrlTree(['/select-tenant']);
+  }
+
   // If multiple tenants and none selected, force selection screen
   if (tenantStore.needsTenantSelection()) {
     return router.createUrlTree(['/select-tenant']);

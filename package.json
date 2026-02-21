@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "feature:new": "node scripts/new-feature.mjs",
+    "supabase:types": "supabase gen types typescript --project-id ynwlidadbattxknclxyd --schema public > src/app/core/supabase/database.types.ts"
   },
   "prettier": {
     "printWidth": 100,
@@ -34,6 +36,7 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
+    "supabase": "^2.0.0",
     "@angular/build": "^21.1.4",
     "@angular/cli": "^21.1.4",
     "@angular/compiler-cli": "^21.1.0",

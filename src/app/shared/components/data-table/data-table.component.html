@@ -1,0 +1,104 @@
+<div
+  class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)]"
+>
+  @if (rows().length === 0) {
+    <div class="p-6 text-center">
+      <p class="font-medium">{{ emptyTitle() }}</p>
+      @if (emptyDescription(); as desc) {
+        <p class="mt-1 text-sm">{{ desc }}</p>
+      }
+    </div>
+  } @else {
+    <!-- Desktop: table (md and up) -->
+    <div class="hidden overflow-x-auto md:block">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-[var(--color-border-default)]">
+            @for (col of columnsForTable(); track col.key) {
+              <th
+                class="px-4 py-3 text-left text-sm font-medium"
+                [attr.scope]="'col'"
+              >
+                {{ col.header }}
+              </th>
+            }
+            @if (actions().length > 0) {
+              <th
+                class="px-4 py-3 text-right text-sm font-medium"
+                [attr.scope]="'col'"
+              >
+                Actions
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track getRowId(row)) {
+            <tr
+              class="border-b border-[var(--color-border-default)] last:border-b-0 transition-colors hover:bg-[var(--color-bg-primary)]"
+              [class.data-table-row-selected]="isSelected(row)"
+            >
+              @for (col of columnsForTable(); track col.key) {
+                <td class="px-4 py-3 text-sm">
+                  {{ getCellValue(row, col) }}
+                </td>
+              }
+              @if (actions().length > 0) {
+                <td class="px-4 py-3 text-right">
+                  <span class="flex justify-end gap-2">
+                    @for (action of actions(); track action.id) {
+                      @if (!isActionDisabled(action, row)) {
+                        <button
+                          type="button"
+                          [attr.aria-label]="action.label"
+                          class="rounded border border-[var(--color-border-default)] px-3 py-1 text-sm"
+                          (click)="runAction(action, row)"
+                        >
+                          {{ action.label }}
+                        </button>
+                      }
+                    }
+                  </span>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile: cards (below md) -->
+    <div class="block space-y-3 p-4 md:hidden">
+      @for (row of rows(); track getRowId(row)) {
+        <div
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-4 transition-colors hover:bg-[var(--color-bg-primary)]"
+          [class.data-table-row-selected]="isSelected(row)"
+        >
+          <div class="space-y-2">
+            @for (col of columnsForCard(); track col.key) {
+              <div>
+                <span class="text-xs font-medium">{{ col.header }}</span>
+                <p class="text-sm">{{ getCellValue(row, col) }}</p>
+              </div>
+            }
+          </div>
+          @if (actions().length > 0) {
+            <div class="mt-4 flex flex-wrap gap-2">
+              @for (action of actions(); track action.id) {
+                @if (!isActionDisabled(action, row)) {
+                  <button
+                    type="button"
+                    class="rounded border border-[var(--color-border-default)] px-3 py-1 text-sm"
+                    (click)="runAction(action, row)"
+                  >
+                    {{ action.label }}
+                  </button>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

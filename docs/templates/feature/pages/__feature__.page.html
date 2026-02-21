@@ -1,0 +1,17 @@
+<section class="p-4">
+  <h1 class="mb-4 text-xl font-semibold">__Feature__</h1>
+
+  @if (store.isLoading()) {
+    <p role="status">Loading…</p>
+  } @else if (store.error(); as err) {
+    <p class="text-sm" role="alert">{{ err.message }}</p>
+  } @else if (store.hasItems()) {
+    <div class="flex flex-col gap-2">
+      @for (item of store.items(); track item.id) {
+        <app-__feature__-card [item]="item" />
+      }
+    </div>
+  } @else {
+    <p>No items yet.</p>
+  }
+</section>

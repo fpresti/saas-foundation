@@ -1,6 +1,7 @@
 export interface Tenant {
   id: string;
   name: string;
+  role?: 'owner' | 'member' | 'super_admin';
 }
 
 export interface TenantMembership {

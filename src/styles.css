@@ -30,3 +30,14 @@ html, body {
 body {
   margin: 0;
 }
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/* Data table: selected row highlight */
+.data-table-row-selected {
+  background-color: var(--color-bg-primary);
+  border-left: 4px solid var(--color-primary-500);
+}

@@ -1,174 +1,189 @@
-# SaaS Foundation --- AI Working Agreement (MVP v1)
+# SaaS Foundation — AI Working Agreement (Framework v2)
 
-This document defines how AI agents (Cursor / Codex) must operate in
-this repository.
+This document defines how AI agents (Cursor / Codex) must operate in this repository.
 
 If any instruction conflicts with this document, **this document wins**.
 
-This is the MVP version, intentionally minimal but designed to evolve
-into a reusable SaaS framework.
+SaaS Foundation has evolved from MVP into a reusable SaaS framework base.  
+All new work must respect the Feature Architecture Contract defined below.
 
-------------------------------------------------------------------------
+---
 
 # 0) Architecture Vision
 
-SaaS Foundation is a **strict multi-tenant SaaS foundation**.
+SaaS Foundation is a **strict multi-tenant SaaS framework foundation**.
 
-MVP Scope: 
-- Supabase (Postgres + RLS + RPC + Auth) 
-- Angular 21(Standalone + Signals) 
-- Tailwind CSS v4 (CSS variables) 
-- Isolation enforced via RLS 
+Core Scope:
+- Supabase (Postgres + RLS + RPC + Auth)
+- Angular 21 (Standalone + Signals)
+- Tailwind CSS v4 (CSS variables only)
+- Isolation enforced via RLS
 - Backend is authoritative
-- The application must not render protected features until both:
-	- Auth session is resolved
-	- Tenant context is loaded
+- Application must not render protected features until:
+  - Auth session is resolved
+  - Tenant context is resolved
 
-Future: 
-- May evolve to include backend layer 
-- May evolve to fine-grained permissions system 
-- This playbook will evolve with architecture
+Future evolution:
+- Optional backend intermediary layer
+- Fine-grained permission system
+- Reusable SaaS modules (CRM, billing, fleet, etc.)
 
-------------------------------------------------------------------------
+This playbook must evolve before architecture evolves.
+
+---
 
 # 1) Core Non-Negotiable Principles
 
 ## 1.1 Backend is Authoritative
 
--   The frontend never grants permissions.
--   The frontend never assumes access.
--   Security is enforced by RLS and/or RPC.
--   UI visibility ≠ authorization.
+- Frontend never grants permissions.
+- Frontend never assumes access.
+- Security is enforced by RLS and/or RPC.
+- UI visibility ≠ authorization.
 
 ## 1.2 Strict Multi-Tenant Isolation
 
--   Every business entity belongs to a `tenant_id`.
--   Every query must respect tenant context.
--   Never implement client-side filtering for security.
--   Never bypass RLS expectations.
+- Every business entity belongs to a `tenant_id`.
+- Every query must respect tenant context.
+- Never implement client-side filtering for security.
+- Never bypass RLS expectations.
+- Tenant selection is contextual, not a security mechanism.
 
-## 1.3 Simplicity Over Engineering Ego
+## 1.3 Controlled Evolution
 
--   Prefer simple and readable patterns.
--   Avoid abstraction layers unless justified.
--   No premature framework building.
--   MVP first, framework later.
+- Prefer simple, readable patterns.
+- No premature abstraction.
+- No accidental framework growth.
+- Framework decisions must be explicit.
 
-------------------------------------------------------------------------
+---
 
 # 2) Frontend Stack Rules
 
 ## 2.1 Angular Rules
 
--   Angular 21.
--   Standalone Components only.
--   Signals for state management.
--   Services return Promises.
--   Avoid RxJS unless strictly necessary.
--   If RxJS is used, justify it in comments.
+- Angular 21.
+- Standalone components only.
+- `ChangeDetectionStrategy.OnPush` is mandatory.
+- Signals for state management.
+- Services return Promises.
+- Avoid RxJS unless strictly necessary.
+- If RxJS is used, justify it.
 
 ## 2.2 Component Discipline
 
--   Components must be thin.
--   No direct Supabase calls inside components.
--   Use Store + Service pattern.
--   Split components if \> 300 lines.
+Components must be thin.
+
+- No Supabase calls inside components.
+- No business logic inside templates.
+- No router + service mixing for orchestration.
+- Components consume Stores only.
+- Inline templates are forbidden unless explicitly requested.
+- Split components if > 300 lines.
 
 ## 2.3 Store Pattern (Signals)
 
-Each feature may have: 
-- state signal 
-- computed selectors 
-- async actions (Promise-based) 
-- error + loading state management
+Each feature store must include:
 
-Stores orchestrate services. 
-Components consume stores.
+- `state` signal
+- `isLoading` signal
+- `error` signal
+- computed selectors
+- async actions (Promise-based)
 
-------------------------------------------------------------------------
+Pattern:
+
+Component → Store → Service → Supabase/RPC
+
+Never:
+
+Component → Supabase  
+Component → Service directly (except trivial read-only cases)
+
+---
 
 # 3) Styling Rules (Tailwind v4 + CSS Variables)
 
 Tailwind is configured via CSS variables only.
 
-Rules: 
-- Do NOT use `tailwind.config.js`. 
-- Do NOT define text colors in components. 
-- Use these tokens: 
-	-`bg-[var(--color-bg-primary)]` 
-	-`bg-[var(--color-bg-secondary)]` 
-	-`border-[var(--color-border-default)]` 
-- Use `rounded` (not rounded-lg / xl). 
-- Respect global button/input styles. 
+Rules:
+- No `tailwind.config.js`.
+- No explicit text color classes in components.
+- Use tokens:
+  - `bg-[var(--color-bg-primary)]`
+  - `bg-[var(--color-bg-secondary)]`
+  - `border-[var(--color-border-default)]`
+- Use `rounded` only.
+- Respect global button/input styles.
 - No inline styles unless strictly required.
+- No third-party UI frameworks.
 
-No new UI libraries without explicit request.
+Reusable UI must go into `shared/`.
 
-------------------------------------------------------------------------
+---
 
 # 4) Supabase Integration Rules
 
 ## 4.1 Single Client Source
 
--   Supabase client must be created in one central place.
--   No multiple instances scattered in features.
+- Supabase client is created once in `core/supabase`.
+- No duplicate instances.
+- No Supabase usage outside Services.
 
 ## 4.2 RPC-First for Critical Writes
 
-Use RPC for: 
-- create tenant with owner 
-- invitations 
-- accepting invitations 
-- membership changes 
-- subscription changes 
-- any role-related logic
+RPC required for:
+- Tenant creation
+- Owner assignment
+- Invitations
+- Membership changes
+- Role changes
+- Subscription changes
+- Any security-sensitive operation
 
-Direct table operations are allowed only for: 
-- tenant-scoped non-critical entities 
-- read-only queries protected by RLS
+Direct table operations allowed only for:
+- Tenant-scoped non-critical entities
+- Read-only queries protected by RLS
 
 If unsure → use RPC.
 
 ## 4.3 Error Normalization
 
-All Supabase errors must be normalized into:
+All Supabase errors must be normalized:
 
-{ 
- code: string 
- message: string 
- details?: unknown 
+{
+  code: string
+  message: string
+  details?: unknown
 }
 
-- Never expose raw Supabase error objects to UI.
-- Must map Supabase error codes when possible.
-- Never leak raw error stack traces.
+Never expose raw Supabase error objects to UI.
 
-------------------------------------------------------------------------
+---
 
-# 5) Roles Model (MVP)
+# 5) Roles Model (Current Phase)
 
-Platform Role: 
+Platform Role:
 - super_admin
 
-Tenant Roles: 
-- owner 
+Tenant Roles:
+- owner
 - member
 
-Frontend may: 
-- Hide or show UI elements based on role (cosmetic only).
+Frontend may:
+- Show/hide UI elements cosmetically.
 
-Frontend must not: 
-- Enforce data restrictions. 
-- Implement permission engines. 
-- Filter server data for "security".
+Frontend must not:
+- Enforce security
+- Filter data for security
+- Implement permission engines
 
-Authorization always belongs to backend/RLS.
+Future permissions system must be defined before implementation.
 
-------------------------------------------------------------------------
+---
 
 # 6) Folder Structure
 
-```text
 src/
   app/
     core/
@@ -186,6 +201,7 @@ src/
         services/
         stores/
         types.ts
+        routes.ts
         index.ts
 
     shared/
@@ -194,94 +210,136 @@ src/
       types/
 
     app.routes.ts
-```
 
-- Core: Cross-cutting concerns only.
-- Features: Self-contained domain logic.
-- Shared: Reusable non-core UI elements.
-- Use separate .html and .ts files for components.
-- Inline templates are forbidden unless explicitly requested.
+Core:
+Cross-cutting concerns only.
 
-------------------------------------------------------------------------
+Features:
+Self-contained domain logic.
 
-# 7) Ticket-Based AI Workflow
+Shared:
+Reusable UI primitives only.
+
+---
+
+# 7) Feature Architecture Contract (Framework Layer)
+
+Every feature must follow this structure:
+
+features/<feature-name>/
+  pages/
+  components/
+  services/
+  stores/
+  types.ts
+  routes.ts
+  index.ts
+
+Rules:
+
+- Page component is the entry point.
+- Store orchestrates feature state.
+- Service handles data access.
+- Supabase is only used inside Service.
+- No cross-feature coupling.
+- Features must be lazy-load ready.
+- Reusable UI belongs in `shared/`, not inside features.
+
+---
+
+# 8) Shared Component Rules
+
+Shared components:
+
+- Must not depend on feature logic.
+- Must not inject feature stores.
+- Must not call router.
+- Must be generic and typed.
+- Must use OnPush.
+- Must be mobile-first responsive.
+
+---
+
+# 9) Ticket-Based AI Workflow
 
 AI must operate in structured tickets.
 
-Every task must define: 
-- Goal 
-- Scope 
-- Files to modify 
-- Files not to touch 
-- Acceptance criteria 
+Each ticket must define:
+- Goal
+- Scope
+- Files to modify
+- Files not to touch
+- Acceptance criteria
 - Out of scope
 
-AI must: 
-- Modify only required files. 
-- Avoid sweeping refactors. 
+AI must:
+- Modify only required files.
+- Avoid sweeping refactors.
 - Avoid new dependencies unless requested.
+- Respect Feature Architecture Contract.
 
-------------------------------------------------------------------------
+---
 
-# 8) Forbidden Patterns (Hard NO)
+# 10) Definition of Done
 
--   RxJS-based global state management.
--   Supabase calls inside components.
--   Permission logic in Angular.
--   Bypassing RPC for critical writes.
--   New UI frameworks.
--   Setting text color classes.
--   Overabstracting patterns in MVP stage.
+A feature is done when:
 
-------------------------------------------------------------------------
+- Build passes.
+- No forbidden patterns introduced.
+- RLS/RPC respected.
+- No fake authorization.
+- No Supabase in components.
+- Store → Service separation respected.
+- UI respects design tokens.
+- Lazy-load ready.
 
-# 9) Feature Template (MVP)
-```
-features/
-  <feature-name>/
-    pages/
-    components/
-    services/
-    stores/
-    types.ts
-    index.ts
-```
+---
 
-Pattern:
+# 11) Lazy Loading Policy
 
-Component → Store → Service → Supabase/RPC
+All features must be designed to be lazy-loadable.
 
-Never: Component → Supabase
+New features must:
+- Export `routes.ts`
+- Be compatible with `loadChildren`
 
-------------------------------------------------------------------------
+Migration of existing features to lazy loading must follow a ticket.
 
-# 10) Definition of Done (MVP)
+---
 
-A feature is done when: 
-- Build passes. 
-- No forbidden patterns introduced. 
-- UI respects global tokens. 
-- RLS/RPC is respected. 
-- No fake client-side authorization. 
-- Code is readable and simple.
+# 12) Evolution Rule
 
-------------------------------------------------------------------------
+Playbook must be updated BEFORE introducing:
 
-# 11) Evolution Rule
-
-This playbook must be updated BEFORE introducing: 
-- Fine-grained permission system 
-- Backend intermediary layer 
-- Major structural refactor 
-- Cross-feature shared state engines 
-- New architectural patterns
+- Fine-grained permissions
+- Backend intermediary layer
+- Cross-feature global state engine
+- Caching layer
+- Event bus
+- Micro-frontend strategy
+- Major routing refactor
 
 Architecture changes require playbook update first.
 
-------------------------------------------------------------------------
+---
 
-# 12) Philosophy
+# 13) AI Safety Guardrails
 
-MVP first. Stability second. Framework later.
+AI agents must:
+
+- Never introduce Supabase calls inside components.
+- Never bypass Store → Service → Supabase pattern.
+- Never introduce RxJS-based global state.
+- Never introduce UI frameworks without explicit instruction.
+- Never modify core architectural rules without updating this playbook first.
+- Always prioritize clarity and maintainability over cleverness.
+
+---
+
+# 14) Philosophy
+
+MVP first.
+Stability second.
+Framework intentionally.
 
 SaaS Foundation must grow intentionally, not accidentally.

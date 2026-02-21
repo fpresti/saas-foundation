@@ -1,0 +1,16 @@
+<div class="flex min-h-screen bg-[var(--color-bg-primary)]">
+  <aside
+    class="hidden w-64 shrink-0 flex-col border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] md:flex"
+    role="navigation"
+    aria-label="Sidebar"
+  >
+    <app-sidebar-panel />
+  </aside>
+  <div class="flex flex-1 flex-col min-w-0">
+    <app-topbar />
+    <main class="flex-1 overflow-auto p-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+<app-sidebar-drawer />
