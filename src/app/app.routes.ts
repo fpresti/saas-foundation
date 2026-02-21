@@ -2,7 +2,11 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
-import { AppShellPageComponent } from './features/app-shell';
+import {
+  AppShellPageComponent,
+  SettingsPlaceholderComponent,
+  UsersPlaceholderComponent,
+} from './features/app-shell';
 
 export const routes: Routes = [
   {
@@ -45,6 +49,16 @@ export const routes: Routes = [
         canActivate: [onboardingGuard],
         loadChildren: () =>
           import('./features/home/routes').then(m => m.homeRoutes)
+      },
+      {
+        path: 'settings',
+        canActivate: [onboardingGuard],
+        component: SettingsPlaceholderComponent,
+      },
+      {
+        path: 'users',
+        canActivate: [onboardingGuard],
+        component: UsersPlaceholderComponent,
       }
     ]
   },

@@ -1,18 +1,35 @@
 <aside
-  class="hidden w-14 shrink-0 flex-col items-center border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] py-4 md:flex"
+  class="hidden h-full min-h-screen w-14 shrink-0 flex-col items-center gap-1 border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] py-4 md:flex"
   role="navigation"
   aria-label="Icon navigation"
 >
   <button
     type="button"
-    (click)="layoutStore.openDrawer()"
+    (click)="layoutStore.toggleSidebar()"
     class="rounded p-2 hover:bg-[var(--color-bg-primary)]"
-    aria-label="Open navigation menu"
+    aria-label="Expand navigation"
   >
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <line x1="4" x2="20" y1="12" y2="12" />
-      <line x1="4" x2="20" y1="6" y2="6" />
-      <line x1="4" x2="20" y1="18" y2="18" />
-    </svg>
+    <app-nav-icon icon="chevron-right" />
   </button>
+  @for (item of navStore.railItems(); track item.routerLink) {
+    @if (item.disabled) {
+      <span
+        class="flex size-10 items-center justify-center rounded opacity-50"
+        [attr.aria-label]="item.label"
+        [attr.aria-disabled]="true"
+      >
+        <app-nav-icon [icon]="item.icon" />
+      </span>
+    } @else {
+      <a
+        [routerLink]="item.routerLink"
+        routerLinkActive="nav-active"
+        [routerLinkActiveOptions]="{ exact: !!item.exact }"
+        class="flex size-10 items-center justify-center rounded"
+        [attr.aria-label]="item.label"
+      >
+        <app-nav-icon [icon]="item.icon" />
+      </a>
+    }
+  }
 </aside>

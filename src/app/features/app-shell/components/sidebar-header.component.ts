@@ -2,11 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, input } from '@an
 import { Router } from '@angular/router';
 import { AuthStore } from '../../../core/auth/auth.store';
 import { TenantStore } from '../../../core/tenant/tenant.store';
+import { NavIconComponent } from './nav-icon.component';
 import { LayoutUiStore } from '../stores/layout-ui.store';
 
 @Component({
   selector: 'app-sidebar-header',
   standalone: true,
+  imports: [NavIconComponent],
   templateUrl: './sidebar-header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

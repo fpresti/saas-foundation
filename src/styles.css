@@ -11,6 +11,10 @@
 
   --color-text-primary: #000000;
   --color-text-secondary: #ffffff;
+
+  /* Nav active state (border/background via tokens) */
+  --color-nav-active-bg: var(--color-bg-primary);
+  --color-nav-active-border: var(--color-primary-500);
 }
 
 /* Dark theme */
@@ -21,6 +25,9 @@
 
   --color-primary-500: #006d77;
   --color-primary-700: #00545c;
+
+  --color-nav-active-bg: var(--color-bg-primary);
+  --color-nav-active-border: var(--color-primary-500);
 }
 
 html, body {
@@ -34,6 +41,12 @@ body {
 button,
 [role="button"] {
   cursor: pointer;
+}
+
+/* Nav active state (border/background via tokens) */
+.nav-active {
+  background-color: var(--color-nav-active-bg);
+  border-left: 4px solid var(--color-nav-active-border);
 }
 
 /* Data table: selected row highlight */

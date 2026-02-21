@@ -4,6 +4,9 @@ import { Injectable, signal } from '@angular/core';
 export class LayoutUiStore {
   readonly isDrawerOpen = signal<boolean>(false);
 
+  /** Desktop sidebar: false = rail (icons only), true = panel (labels) */
+  readonly isSidebarExpanded = signal<boolean>(false);
+
   openDrawer(): void {
     this.isDrawerOpen.set(true);
   }
@@ -14,5 +17,9 @@ export class LayoutUiStore {
 
   toggleDrawer(): void {
     this.isDrawerOpen.update((v) => !v);
+  }
+
+  toggleSidebar(): void {
+    this.isSidebarExpanded.update((v) => !v);
   }
 }
