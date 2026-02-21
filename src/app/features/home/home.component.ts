@@ -15,11 +15,15 @@ type DemoRow = { id: number; name: string; role: string };
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent {
-  readonly demoRows: DemoRow[] = [
-    { id: 1, name: 'Alice', role: 'Admin' },
-    { id: 2, name: 'Bob', role: 'Editor' },
-    { id: 3, name: 'Carol', role: 'Viewer' },
-  ];
+  readonly demoRows: DemoRow[] = Array.from({ length: 50 }, (_, i) => {
+    const names = ['Alice', 'Bob', 'Carol', 'David', 'Eve', 'Frank', 'Grace', 'Henry'];
+    const roles = ['Admin', 'Editor', 'Viewer'];
+    return {
+      id: i + 1,
+      name: names[i % names.length] + ' ' + (i + 1),
+      role: roles[i % roles.length],
+    };
+  });
 
   readonly demoColumns: DataTableColumn<DemoRow>[] = [
     { key: 'id', header: 'ID' },
