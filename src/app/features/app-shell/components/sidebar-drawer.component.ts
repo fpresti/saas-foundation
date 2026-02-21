@@ -6,14 +6,15 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { SidebarPanelComponent } from './sidebar-panel.component';
 import { filter } from 'rxjs';
 import { LayoutUiStore } from '../stores/layout-ui.store';
 
 @Component({
   selector: 'app-sidebar-drawer',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [SidebarPanelComponent],
   templateUrl: './sidebar-drawer.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

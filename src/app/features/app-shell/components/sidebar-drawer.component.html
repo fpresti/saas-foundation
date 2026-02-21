@@ -5,47 +5,12 @@
     role="presentation"
   >
     <aside
-      class="absolute left-0 top-0 h-full w-64 max-w-[85vw] rounded-r border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] shadow-lg"
+      class="absolute left-0 top-0 flex h-full w-64 max-w-[85vw] flex-col rounded-r border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] shadow-lg"
       (click)="onPanelClick($event)"
       role="dialog"
       aria-label="Navigation menu"
     >
-      <div class="flex h-14 items-center justify-end border-b border-[var(--color-border-default)] px-4">
-        <button
-          type="button"
-          (click)="layoutStore.closeDrawer()"
-          class="rounded p-1 hover:bg-[var(--color-bg-primary)]"
-          aria-label="Close menu"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
-        </button>
-      </div>
-      <nav class="p-4">
-        <ul class="space-y-1">
-          <li>
-            <a
-              routerLink="/"
-              routerLinkActive="bg-[var(--color-bg-primary)] rounded"
-              [routerLinkActiveOptions]="{ exact: true }"
-              class="block rounded px-3 py-2"
-            >
-              Home
-            </a>
-          </li>
-          <li>
-            <a
-              routerLink="/select-tenant"
-              routerLinkActive="bg-[var(--color-bg-primary)] rounded"
-              class="block rounded px-3 py-2"
-            >
-              Switch tenant
-            </a>
-          </li>
-        </ul>
-      </nav>
+      <app-sidebar-panel [showCloseButton]="true" class="flex flex-1 flex-col overflow-auto" />
     </aside>
   </div>
 }
