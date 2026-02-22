@@ -1,11 +1,13 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import type { Session } from '@supabase/supabase-js';
 import type { NormalizedError } from '../utils/supabase-error.util';
+import { AccessContextStore } from '../../features/access-context';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   private readonly authService = inject(AuthService);
+  private readonly accessContextStore = inject(AccessContextStore);
 
   private unsubscribeAuthChanges: (() => void) | null = null;
 
@@ -26,6 +28,9 @@ export class AuthStore {
 
       this.unsubscribeAuthChanges = this.authService.onAuthStateChange((s) => {
         this.session.set(s);
+        if (s === null) {
+          this.accessContextStore.reset();
+        }
       });
     } catch {
       this.session.set(null);
@@ -45,6 +50,10 @@ export class AuthStore {
 
     // Set session immediately to avoid race: navigation happens before onAuthStateChange fires.
     this.session.set(result.session);
+    // Load access context so protected routes can render (app waits for status === 'ready').
+    if (result.session) {
+      await this.accessContextStore.load();
+    }
     return true;
   }
 

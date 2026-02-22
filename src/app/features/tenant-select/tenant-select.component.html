@@ -8,7 +8,7 @@
       @if (isLoading()) {
         <p class="mt-4" role="status">Loading…</p>
       } @else if (error(); as err) {
-        <p class="mt-4 text-sm" role="alert">{{ err.message }}</p>
+        <p class="mt-4 text-sm" role="alert">{{ err }}</p>
       } @else if (tenants().length === 0) {
         <p class="mt-4">No tenants available.</p>
         <a

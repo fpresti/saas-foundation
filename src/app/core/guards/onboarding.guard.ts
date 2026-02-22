@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
-import { TenantStore } from '../tenant/tenant.store';
+import { AccessContextStore } from '../../features/access-context';
 
 /**
  * Use on routes that require at least one tenant (e.g. Home).
@@ -8,15 +8,15 @@ import { TenantStore } from '../tenant/tenant.store';
  * Redirects to /onboarding/create-tenant only when user has no tenants AND is not super_admin.
  */
 export const onboardingGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
-  const tenantStore = inject(TenantStore);
+  const accessContextStore = inject(AccessContextStore);
   const router = inject(Router);
 
-  if (tenantStore.isLoading()) {
-    await tenantStore.initialize();
+  if (accessContextStore.status() !== 'ready') {
+    await accessContextStore.load();
   }
 
-  const hasNoTenants = tenantStore.availableTenants().length === 0;
-  const isSuperAdmin = tenantStore.platformRole() === 'super_admin';
+  const hasNoTenants = accessContextStore.allowedTenants().length === 0;
+  const isSuperAdmin = accessContextStore.isSuperAdmin();
 
   if (hasNoTenants && !isSuperAdmin) {
     return router.createUrlTree(['/onboarding/create-tenant']);

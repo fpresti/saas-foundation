@@ -1,13 +1,13 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { AppResetService } from '../../../core/services/app-reset.service';
-import { TenantStore } from '../../../core/tenant/tenant.store';
+import { AccessContextStore } from '../../access-context';
 import { NavigationService } from '../services/navigation.service';
 import type { NavSection } from '../types';
 
 @Injectable({ providedIn: 'root' })
 export class NavigationStore {
   private readonly navigationService = inject(NavigationService);
-  private readonly tenantStore = inject(TenantStore);
+  private readonly accessContextStore = inject(AccessContextStore);
   private readonly appReset = inject(AppResetService);
 
   constructor() {
@@ -18,8 +18,8 @@ export class NavigationStore {
   readonly sections = computed<readonly NavSection[]>(() => {
     const base = this.navigationService.getSections();
     const canShowSwitchTenant =
-      this.tenantStore.platformRole() === 'super_admin' &&
-      this.tenantStore.availableTenants().length > 1;
+      this.accessContextStore.isSuperAdmin() &&
+      this.accessContextStore.allowedTenants().length > 1;
     if (canShowSwitchTenant) return base;
     return base.map((section) => {
       if (section.id === 'main') {

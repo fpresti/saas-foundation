@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthStore } from '../../../core/auth/auth.store';
-import { TenantStore } from '../../../core/tenant/tenant.store';
+import { AccessContextStore } from '../../access-context';
 import { NavIconComponent } from './nav-icon.component';
 import { LayoutUiStore } from '../stores/layout-ui.store';
 
@@ -16,22 +16,22 @@ export class SidebarHeaderComponent {
   readonly showCloseButton = input<boolean>(false);
   protected readonly authStore = inject(AuthStore);
   protected readonly layoutStore = inject(LayoutUiStore);
-  protected readonly tenantStore = inject(TenantStore);
+  protected readonly accessContextStore = inject(AccessContextStore);
   private readonly router = inject(Router);
 
   readonly userName = computed(
     () => this.authStore.session()?.user?.email ?? '—'
   );
   readonly activeTenantName = computed(
-    () => this.tenantStore.activeTenant()?.name ?? '—'
+    () => this.accessContextStore.activeTenant()?.name ?? '—'
   );
   readonly canSwitchTenant = computed(
     () =>
-      this.tenantStore.platformRole() === 'super_admin' &&
-      this.tenantStore.availableTenants().length > 1
+      this.accessContextStore.isSuperAdmin() &&
+      this.accessContextStore.allowedTenants().length > 1
   );
   readonly hasActiveTenant = computed(
-    () => this.tenantStore.activeTenant() !== null
+    () => this.accessContextStore.activeTenant() !== null
   );
 
   async signOut(): Promise<void> {

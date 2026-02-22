@@ -5,7 +5,7 @@ import {
   inject,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { TenantStore } from '../../core/tenant/tenant.store';
+import { AccessContextStore } from '../access-context';
 import {
   DataTableComponent,
   type DataTableColumn,
@@ -28,22 +28,27 @@ type TenantRow = {
 })
 export class TenantSelectComponent {
   private readonly router = inject(Router);
-  private readonly tenantStore = inject(TenantStore);
+  private readonly accessContextStore = inject(AccessContextStore);
 
-  readonly tenants = computed(() => this.tenantStore.availableTenants());
+  readonly tenants = computed(() => this.accessContextStore.allowedTenants());
   readonly activeId = computed(
-    () => this.tenantStore.activeTenant()?.id ?? null,
+    () => this.accessContextStore.tenantId() ?? null,
   );
-  readonly isLoading = this.tenantStore.isLoading;
-  readonly error = this.tenantStore.error;
+  readonly isLoading = computed(
+    () => this.accessContextStore.status() === 'loading',
+  );
+  readonly error = computed(() => this.accessContextStore.error());
 
   readonly rows = computed<TenantRow[]>(() => {
     const list = this.tenants();
     const active = this.activeId();
+    const ctx = this.accessContextStore.context();
+    const roleFor = (id: string) =>
+      id === ctx?.tenant_id ? (ctx.tenant_role ?? '') : '';
     return list.map((tenant) => ({
       id: tenant.id,
       name: tenant.name,
-      role: tenant.role ?? '',
+      role: roleFor(tenant.id) || (ctx?.is_super_admin ? 'super_admin' : ''),
       status: tenant.id === active ? 'Active' : '',
     }));
   });
@@ -72,7 +77,7 @@ export class TenantSelectComponent {
   ];
 
   async selectTenant(id: string): Promise<void> {
-    this.tenantStore.setActiveTenant(id);
+    await this.accessContextStore.selectTenant(id);
     await this.router.navigateByUrl('/');
   }
 }
