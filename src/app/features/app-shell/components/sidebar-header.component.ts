@@ -26,9 +26,7 @@ export class SidebarHeaderComponent {
     () => this.tenantStore.activeTenant()?.name ?? '—'
   );
   readonly canSwitchTenant = computed(
-    () =>
-      this.tenantStore.platformRole() === 'super_admin' &&
-      this.tenantStore.availableTenants().length > 1
+    () => this.tenantStore.availableTenants().length > 1
   );
   readonly hasActiveTenant = computed(
     () => this.tenantStore.activeTenant() !== null
