@@ -3,6 +3,17 @@ import { SupabaseService } from '../../core/supabase/supabase.service';
 import { normalizeError } from '../../core/utils/supabase-error.util';
 import type { MemberListItem } from './members.view-model';
 
+export type TenantRoleOption = { id: string; code: string; name: string };
+
+export type CreateInvitationResult = {
+  invitation_id: string;
+  email: string;
+  expires_at: string;
+  member_type: string;
+  tenant_id: string;
+  token: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class MembersService {
   private readonly supabase = inject(SupabaseService).client;
@@ -103,5 +114,64 @@ export class MembersService {
       (a.fullName || a.userId).localeCompare(b.fullName || b.userId)
     );
     return result;
+  }
+
+  async listRolesForTenant(tenantId: string): Promise<TenantRoleOption[]> {
+    const { data, error } = await this.supabase
+      .from('roles')
+      .select('id, code, name')
+      .eq('tenant_id', tenantId)
+      .order('name');
+
+    const n = normalizeError(error);
+    if (n) throw n;
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      code: r.code,
+      name: r.name,
+    }));
+  }
+
+  async createInvitation(params: {
+    tenantId: string;
+    email: string;
+    memberType?: string;
+    expiresInHours?: number;
+  }): Promise<CreateInvitationResult> {
+    const { data, error } = await this.supabase.rpc('create_invitation', {
+      p_tenant_id: params.tenantId,
+      p_email: params.email.trim(),
+      p_member_type: params.memberType ?? 'member',
+      p_expires_in_hours: params.expiresInHours ?? 72,
+    });
+
+    const n = normalizeError(error);
+    if (n) throw n;
+    const row = data?.[0];
+    if (!row) {
+      throw { message: 'No invitation returned', code: 'empty' };
+    }
+    return {
+      invitation_id: row.invitation_id,
+      email: row.email,
+      expires_at: row.expires_at,
+      member_type: row.member_type,
+      tenant_id: row.tenant_id,
+      token: row.token,
+    };
+  }
+
+  async assignTenantUserRole(params: {
+    tenantId: string;
+    userId: string;
+    roleId: string;
+  }): Promise<void> {
+    const { error } = await this.supabase.rpc('assign_tenant_user_role', {
+      p_tenant_id: params.tenantId,
+      p_user_id: params.userId,
+      p_role_id: params.roleId,
+    });
+    const n = normalizeError(error);
+    if (n) throw n;
   }
 }

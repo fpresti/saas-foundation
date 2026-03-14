@@ -14,6 +14,7 @@ export interface MemberListItem {
 /** Row shape for {@link DataTableComponent} (stable id + display strings). */
 export type MemberTableRow = {
   id: string;
+  avatarUrl: string | null;
   displayName: string;
   memberType: string;
   rolesLabel: string;
@@ -22,6 +23,7 @@ export type MemberTableRow = {
 export function toMemberTableRow(item: MemberListItem): MemberTableRow {
   return {
     id: item.userId,
+    avatarUrl: item.avatarUrl,
     displayName: item.fullName?.trim() || item.userId,
     memberType: item.memberType,
     rolesLabel:

@@ -9,6 +9,10 @@ export interface DataTableColumn<T extends DataTableRow> {
   format?: (value: T[keyof T], row: T) => string;
   /** Hide on mobile card view */
   hideOnMobile?: boolean;
+  /**
+   * When set, cell shows a small avatar from `row[avatarUrlKey]` plus text from {@link key}.
+   */
+  avatarUrlKey?: keyof T & string;
 }
 
 export interface DataTableAction<T extends DataTableRow> {

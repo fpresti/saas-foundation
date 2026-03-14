@@ -40,7 +40,26 @@
             >
               @for (col of columnsForTable(); track col.key) {
                 <td class="px-4 py-3 text-sm">
-                  {{ getCellValue(row, col) }}
+                  @if (col.avatarUrlKey) {
+                    <span class="inline-flex items-center gap-2">
+                      @if (row[col.avatarUrlKey!]; as src) {
+                        <img
+                          [src]="src"
+                          alt=""
+                          class="h-8 w-8 shrink-0 rounded-full border border-[var(--color-border-default)] object-cover"
+                        />
+                      } @else {
+                        <span
+                          class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] text-xs text-[var(--color-text-secondary)]"
+                          aria-hidden="true"
+                          >?</span
+                        >
+                      }
+                      <span>{{ getCellValue(row, col) }}</span>
+                    </span>
+                  } @else {
+                    {{ getCellValue(row, col) }}
+                  }
                 </td>
               }
               @if (actions().length > 0) {
@@ -78,7 +97,20 @@
             @for (col of columnsForCard(); track col.key) {
               <div>
                 <span class="text-xs font-medium">{{ col.header }}</span>
-                <p class="text-sm">{{ getCellValue(row, col) }}</p>
+                @if (col.avatarUrlKey) {
+                  <p class="mt-1 flex items-center gap-2 text-sm">
+                    @if (row[col.avatarUrlKey!]; as src) {
+                      <img
+                        [src]="src"
+                        alt=""
+                        class="h-8 w-8 rounded-full border border-[var(--color-border-default)] object-cover"
+                      />
+                    }
+                    {{ getCellValue(row, col) }}
+                  </p>
+                } @else {
+                  <p class="text-sm">{{ getCellValue(row, col) }}</p>
+                }
               </div>
             }
           </div>

@@ -15,9 +15,10 @@
     <div class="flex shrink-0 gap-2">
       <button
         type="button"
-        disabled
-        class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium opacity-60"
-        title="Invitation flow not implemented yet"
+        [disabled]="!canInvite()"
+        (click)="openInvite()"
+        class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+        [title]="canInvite() ? 'Send invitation' : 'Requires tenant.members.invite'"
       >
         Invite member
       </button>
@@ -31,6 +32,13 @@
     >
       <p class="font-medium">Could not load members</p>
       <p class="mt-1 opacity-90">{{ err }}</p>
+      <button
+        type="button"
+        (click)="retryLoad()"
+        class="mt-4 rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm text-[var(--color-text-primary)]"
+      >
+        Retry
+      </button>
     </div>
   } @else if (membersLoading()) {
     <div
@@ -50,3 +58,134 @@
     />
   }
 </div>
+
+@if (inviteOpen()) {
+  <div
+    class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="invite-title"
+  >
+    <div
+      class="w-full max-w-md rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 shadow-xl"
+    >
+      <h2 id="invite-title" class="text-lg font-semibold">Invite member</h2>
+      @if (inviteResult(); as r) {
+        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+          Invitation created. Share this link token (expires {{ r.expiresAt | date : 'medium' }}):
+        </p>
+        <pre
+          class="mt-2 max-h-24 overflow-auto rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2 text-xs break-all"
+          >{{ r.token }}</pre
+        >
+        <button
+          type="button"
+          (click)="copyToken()"
+          class="mt-2 text-sm underline"
+        >
+          Copy token
+        </button>
+        <div class="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="closeInvite()"
+            class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+          >
+            Close
+          </button>
+        </div>
+      } @else {
+        <label class="mt-3 block text-sm font-medium">Email</label>
+        <input
+          type="email"
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="inviteEmail()"
+          (ngModelChange)="inviteEmail.set($event)"
+          placeholder="colleague@example.com"
+        />
+        <label class="mt-3 block text-sm font-medium">Member type</label>
+        <select
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="inviteMemberType()"
+          (ngModelChange)="inviteMemberType.set($event)"
+        >
+          <option value="member">Member</option>
+          <option value="owner">Owner</option>
+        </select>
+        @if (inviteError(); as ie) {
+          <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ ie }}</p>
+        }
+        <div class="mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            (click)="closeInvite()"
+            class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            [disabled]="inviteBusy()"
+            (click)="submitInvite()"
+            class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          >
+            {{ inviteBusy() ? 'Sending…' : 'Send invite' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+@if (manageOpen()) {
+  <div
+    class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div
+      class="w-full max-w-md rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 shadow-xl"
+    >
+      <h2 class="text-lg font-semibold">Assign role</h2>
+      <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+        {{ manageUserLabel() }}
+      </p>
+      @if (manageBusy() && !tenantRoles().length) {
+        <p class="mt-4 text-sm text-[var(--color-text-secondary)]">Loading roles…</p>
+      } @else if (tenantRoles().length === 0 && !manageBusy()) {
+        <p class="mt-4 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
+      } @else {
+        <label class="mt-3 block text-sm font-medium">Role</label>
+        <select
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="manageRoleId()"
+          (ngModelChange)="manageRoleId.set($event)"
+        >
+          @for (r of tenantRoles(); track r.id) {
+            <option [value]="r.id">{{ r.name }} ({{ r.code }})</option>
+          }
+        </select>
+      }
+      @if (manageError(); as me) {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ me }}</p>
+      }
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          (click)="closeManage()"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          [disabled]="manageBusy() || !manageRoleId()"
+          (click)="submitAssignRole()"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+        >
+          Assign role
+        </button>
+      </div>
+    </div>
+  </div>
+}
