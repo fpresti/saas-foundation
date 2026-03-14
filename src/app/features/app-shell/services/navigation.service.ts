@@ -18,7 +18,7 @@ export class NavigationService {
         label: 'Configuración',
         items: [
           { label: 'Settings', icon: 'settings', routerLink: '/settings', disabled: true },
-          { label: 'Users', icon: 'users', routerLink: '/users', disabled: true },
+          { label: 'Members', icon: 'users', routerLink: '/members' },
         ],
       },
     ];

@@ -6,7 +6,6 @@ import { tenantContextGuard } from './core/guards/tenant-context.guard';
 import {
   AppShellPageComponent,
   SettingsPlaceholderComponent,
-  UsersPlaceholderComponent,
 } from './features/app-shell';
 
 export const routes: Routes = [
@@ -57,10 +56,16 @@ export const routes: Routes = [
         component: SettingsPlaceholderComponent,
       },
       {
-        path: 'users',
+        path: 'members',
         canActivate: [onboardingGuard, permissionGuard],
         data: { permission: 'tenant.members.read' },
-        component: UsersPlaceholderComponent,
+        loadComponent: () =>
+          import('./features/members/members.component').then(m => m.MembersComponent),
+      },
+      {
+        path: 'users',
+        redirectTo: 'members',
+        pathMatch: 'full',
       },
       {
         path: 'roles',

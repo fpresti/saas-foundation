@@ -1,0 +1,52 @@
+<div class="mx-auto max-w-5xl text-[var(--color-text-primary)]">
+  <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Members</h1>
+      @if (session.activeTenant(); as tenant) {
+        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+          Tenant: {{ tenant.name }}
+        </p>
+      } @else if (session.activeTenantId(); as tid) {
+        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Tenant id: {{ tid }}</p>
+      } @else {
+        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">No active tenant in session</p>
+      }
+    </div>
+    <div class="flex shrink-0 gap-2">
+      <button
+        type="button"
+        disabled
+        class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium opacity-60"
+        title="Invitation flow not implemented yet"
+      >
+        Invite member
+      </button>
+    </div>
+  </header>
+
+  @if (membersError(); as err) {
+    <div
+      class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 text-sm text-red-600 dark:text-red-400"
+      role="alert"
+    >
+      <p class="font-medium">Could not load members</p>
+      <p class="mt-1 opacity-90">{{ err }}</p>
+    </div>
+  } @else if (membersLoading()) {
+    <div
+      class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-12 text-center text-sm text-[var(--color-text-secondary)]"
+      role="status"
+      aria-live="polite"
+    >
+      Loading members…
+    </div>
+  } @else {
+    <app-data-table
+      [rows]="tableRows()"
+      [columns]="columns"
+      [actions]="actions"
+      emptyTitle="No members yet"
+      emptyDescription="This tenant has no member rows yet, or you cannot see them."
+    />
+  }
+</div>
