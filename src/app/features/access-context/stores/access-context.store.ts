@@ -1,5 +1,5 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { AccessContextService } from '../services/access-context.service';
+import { AccessContextService } from '../../../core/auth/access-context.service';
 import type { AccessContext, AccessContextStatus } from '../types';
 import { AppResetService } from '../../../core/services/app-reset.service';
 

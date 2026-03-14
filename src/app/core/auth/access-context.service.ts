@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { SupabaseService } from '../../../core/supabase/supabase.service';
-import { NormalizedError, normalizeError } from '../../../core/utils/supabase-error.util';
-import type { AccessContext } from '../types';
+import { SupabaseService } from '../supabase/supabase.service';
+import { NormalizedError, normalizeError } from '../utils/supabase-error.util';
+import type { AccessContext } from '../../../types/access-context.types';
 
 @Injectable({ providedIn: 'root' })
 export class AccessContextService {
@@ -36,5 +36,18 @@ export class AccessContextService {
         ? (row.allowed_tenants as unknown as AccessContext['allowed_tenants'])
         : [],
     };
+  }
+
+  /**
+   * Backend permission check via RPC (no role-name branching in the client).
+   */
+  async hasPermission(tenantId: string, permissionCode: string): Promise<boolean> {
+    const { data, error } = await this.supabase.rpc('has_permission', {
+      p_tenant_id: tenantId,
+      p_permission_code: permissionCode,
+    });
+    const normalized = normalizeError(error);
+    if (normalized) throw normalized;
+    return Boolean(data);
   }
 }
