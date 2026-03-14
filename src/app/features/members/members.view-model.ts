@@ -12,12 +12,12 @@ export interface MemberListItem {
 }
 
 /** Row shape for {@link DataTableComponent} (stable id + display strings). */
-export interface MemberTableRow {
+export type MemberTableRow = {
   id: string;
   displayName: string;
   memberType: string;
   rolesLabel: string;
-}
+} & Record<string, unknown>;
 
 export function toMemberTableRow(item: MemberListItem): MemberTableRow {
   return {
@@ -26,5 +26,5 @@ export function toMemberTableRow(item: MemberListItem): MemberTableRow {
     memberType: item.memberType,
     rolesLabel:
       item.roleNames.length > 0 ? item.roleNames.join(', ') : '—',
-  };
+  } as MemberTableRow;
 }
