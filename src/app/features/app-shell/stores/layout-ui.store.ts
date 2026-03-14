@@ -1,7 +1,13 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { AppResetService } from '../../../core/services/app-reset.service';
 
 @Injectable({ providedIn: 'root' })
 export class LayoutUiStore {
+  private readonly appReset = inject(AppResetService);
+
+  constructor() {
+    this.appReset.registerResettable('layout-ui', this);
+  }
   readonly isDrawerOpen = signal<boolean>(false);
 
   /** Desktop sidebar: false = rail (icons only), true = panel (labels) */
@@ -21,5 +27,10 @@ export class LayoutUiStore {
 
   toggleSidebar(): void {
     this.isSidebarExpanded.update((v) => !v);
+  }
+
+  /** Reset UI state on tenant change (close drawer). */
+  reset(): void {
+    this.closeDrawer();
   }
 }

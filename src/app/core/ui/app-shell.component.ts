@@ -1,7 +1,7 @@
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { AuthStore } from '../auth/auth.store';
-import { TenantStore } from '../tenant/tenant.store';
+import { AccessContextStore } from '../../features/access-context';
 
 @Component({
   selector: 'app-app-shell',
@@ -12,7 +12,7 @@ import { TenantStore } from '../tenant/tenant.store';
 })
 export class AppShellComponent {
   private readonly authStore = inject(AuthStore);
-  private readonly tenantStore = inject(TenantStore);
+  private readonly accessContextStore = inject(AccessContextStore);
   private readonly router = inject(Router);
 
   readonly userName = computed(
@@ -20,15 +20,15 @@ export class AppShellComponent {
   );
 
   readonly activeTenantName = computed(
-    () => this.tenantStore.activeTenant()?.name ?? '—'
+    () => this.accessContextStore.activeTenant()?.name ?? '—'
   );
 
   readonly canSwitchTenant = computed(
-    () => this.tenantStore.availableTenants().length > 1
+    () => this.accessContextStore.allowedTenants().length > 1
   );
 
   readonly hasActiveTenant = computed(
-    () => this.tenantStore.activeTenant() !== null
+    () => this.accessContextStore.activeTenant() !== null
   );
 
   async signOut(): Promise<void> {

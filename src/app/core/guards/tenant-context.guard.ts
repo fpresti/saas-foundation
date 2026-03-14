@@ -1,37 +1,44 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
-import { TenantStore } from '../tenant/tenant.store';
+import { AccessContextStore } from '../../features/access-context';
 
 export const tenantContextGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
-  const tenantStore = inject(TenantStore);
+  const accessContextStore = inject(AccessContextStore);
   const router = inject(Router);
 
-  // Ensure tenant context has been initialized
-  if (tenantStore.isLoading()) {
-    await tenantStore.initialize();
+  // Ensure access context has been loaded
+  if (accessContextStore.status() !== 'ready') {
+    await accessContextStore.load();
   }
 
-  // Super_admin always must select a tenant before dashboard
+  const ctx = accessContextStore.context();
+
+  // Super_admin with multiple tenants must select before dashboard
   if (
-    tenantStore.platformRole() === 'super_admin' &&
-    tenantStore.activeTenant() === null &&
-    tenantStore.availableTenants().length > 0
+    ctx?.is_super_admin === true &&
+    ctx.tenant_id === null &&
+    ctx.allowed_tenants.length > 0
   ) {
     return router.createUrlTree(['/select-tenant']);
   }
 
   // If multiple tenants and none selected, force selection screen
-  if (tenantStore.needsTenantSelection()) {
+  if (
+    ctx &&
+    ctx.tenant_id === null &&
+    ctx.allowed_tenants.length > 1 &&
+    (ctx.is_super_admin || ctx.allowed_tenants.length > 1)
+  ) {
     return router.createUrlTree(['/select-tenant']);
   }
 
   // If tenant is selected, allow
-  if (tenantStore.activeTenant() !== null) {
+  if (ctx?.tenant_id !== null && ctx?.tenant_id !== undefined) {
     return true;
   }
 
   // Authenticated but no tenant available (edge case)
-  if (tenantStore.availableTenants().length === 0) {
+  if (ctx && ctx.allowed_tenants.length === 0) {
     return router.createUrlTree(['/select-tenant']);
   }
 
