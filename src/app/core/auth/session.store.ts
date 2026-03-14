@@ -6,6 +6,14 @@ import { AuthStore } from './auth.store';
 /**
  * Single public entry point for session + access context.
  * Delegates to internal AuthStore / AccessContextStore (do not inject those from features).
+ *
+ * ## Active tenant (public API)
+ * All active-tenant state is derived from the last successful `get_access_context` result
+ * except switching, which goes through {@link SessionStore.setActiveTenant}.
+ * - **activeTenantId** — RPC `tenant_id` (null until context ready or when server returns no tenant).
+ * - **activeTenant** — Entry from `allowed_tenants` for `tenant_id`, plus current `tenant_role`.
+ * - **allowedTenants** — RPC `allowed_tenants` for the session.
+ * - **setActiveTenant** — Reload context for that tenant + app reset (same as tenant switch).
  */
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
@@ -21,6 +29,7 @@ export class SessionStore {
   /** Current RPC access context; read-only view of AccessContextStore.context. */
   readonly accessContext = computed(() => this.accessContextStore.context());
 
+  /** Active tenant id from access context (server-preferred/current tenant after load). */
   readonly activeTenantId = computed(
     () => this.accessContextStore.context()?.tenant_id ?? null
   );
@@ -43,11 +52,12 @@ export class SessionStore {
     () => this.accessContextStore.context()?.is_super_admin ?? false
   );
 
+  /** Tenants the user may access (from access context). */
   readonly allowedTenants = computed(
     () => this.accessContextStore.context()?.allowed_tenants ?? []
   );
 
-  /** Resolved allowed tenant + role; derived via AccessContextStore rules. */
+  /** Current allowed tenant row + role for {@link activeTenantId}; null if none selected. */
   readonly activeTenant = computed(() => this.accessContextStore.activeTenant());
 
   /** Access context load lifecycle (for tenant-select etc.). */
@@ -109,7 +119,10 @@ export class SessionStore {
     }
   }
 
-  /** Switch active tenant and reset app caches (delegates to AccessContextStore). */
+  /**
+   * Switch active tenant: RPC reload for `tenantId`, then global app reset (nav caches, etc.).
+   * Public entry point for tenant select + shell switch flows.
+   */
   async setActiveTenant(tenantId: string): Promise<void> {
     await this.accessContextStore.selectTenant(tenantId);
   }
@@ -117,6 +130,7 @@ export class SessionStore {
   /**
    * Clear access context immediately; sign out in background (same end state as logout).
    * Void so callers are not forced to await; session updates when Supabase completes.
+   * Resets tenant-related client state so the next session does not inherit the previous tenant.
    */
   clear(): void {
     this.accessContextStore.reset();

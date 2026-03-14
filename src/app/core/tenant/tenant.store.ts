@@ -7,6 +7,10 @@ import { TenantService } from './tenant.service';
 
 const ACTIVE_TENANT_STORAGE_KEY = 'saas-foundation-active-tenant-id';
 
+/**
+ * @deprecated Legacy parallel tenant model — not injected anywhere; safe to ignore.
+ * Canonical active tenant: SessionStore (get_access_context). Legacy localStorage key cleared on logout.
+ */
 @Injectable({ providedIn: 'root' })
 export class TenantStore {
   private readonly sessionStore = inject(SessionStore);

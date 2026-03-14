@@ -112,7 +112,10 @@ export class AccessContextStore {
     this.appReset.resetAll();
   }
 
-  /** Reset to idle (e.g. on sign out). */
+  /**
+   * Reset to idle (sign out, user switch, or clear).
+   * Clears permission cache and legacy client tenant key so tenant state never leaks across sessions.
+   */
   reset(): void {
     this.context.set(null);
     this.status.set('idle');
@@ -121,6 +124,11 @@ export class AccessContextStore {
       this.injector.get(PermissionService).clearCache();
     } catch {
       /* avoid hard failure if DI edge case */
+    }
+    try {
+      localStorage.removeItem('saas-foundation-active-tenant-id');
+    } catch {
+      /* ignore */
     }
   }
 }
