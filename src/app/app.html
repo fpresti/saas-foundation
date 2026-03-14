@@ -1,4 +1,4 @@
-@if (authStore.isLoading() || (authStore.isAuthenticated() && accessContextStore.status() !== 'ready')) {
+@if (sessionStore.loading()) {
   <p>Loading…</p>
 } @else {
   <router-outlet />

@@ -1,7 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { AuthStore } from './core/auth/auth.store';
-import { AccessContextStore } from './features/access-context';
+import { SessionStore } from './core/auth/session.store';
 
 @Component({
   selector: 'app-root',
@@ -10,8 +9,7 @@ import { AccessContextStore } from './features/access-context';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  protected readonly authStore = inject(AuthStore);
-  protected readonly accessContextStore = inject(AccessContextStore);
+  protected readonly sessionStore = inject(SessionStore);
   protected readonly title = signal('saas-foundation');
 
   ngOnInit(): void {
@@ -20,11 +18,6 @@ export class App implements OnInit {
 
   /** Resolve auth then access context. Do not render protected routes until both ready. */
   private async bootstrap(): Promise<void> {
-    await this.authStore.initialize();
-    if (this.authStore.isAuthenticated()) {
-      await this.accessContextStore.load();
-    } else {
-      this.accessContextStore.reset();
-    }
+    await this.sessionStore.initialize();
   }
 }

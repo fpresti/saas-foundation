@@ -1,17 +1,14 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
-import { AccessContextStore } from '../../features/access-context';
+import { SessionStore } from '../auth/session.store';
 
 export const tenantContextGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
-  const accessContextStore = inject(AccessContextStore);
+  const sessionStore = inject(SessionStore);
   const router = inject(Router);
 
-  // Ensure access context has been loaded
-  if (accessContextStore.status() !== 'ready') {
-    await accessContextStore.load();
-  }
+  await sessionStore.ensureAccessContextReady();
 
-  const ctx = accessContextStore.context();
+  const ctx = sessionStore.accessContext();
 
   // Super_admin with multiple tenants must select before dashboard
   if (
