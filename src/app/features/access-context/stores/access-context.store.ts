@@ -4,6 +4,9 @@ import { logBootstrap, logBootstrapWarn } from '../../../core/auth/bootstrap-deb
 import type { AccessContext, AccessContextStatus } from '../types';
 import { AppResetService } from '../../../core/services/app-reset.service';
 
+/**
+ * @deprecated Internal only. Use {@link SessionStore} as the public state entry point for session + access context.
+ */
 @Injectable({ providedIn: 'root' })
 export class AccessContextStore {
   private readonly service = inject(AccessContextService);

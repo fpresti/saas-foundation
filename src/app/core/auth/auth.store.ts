@@ -5,6 +5,9 @@ import { AccessContextStore } from '../../features/access-context';
 import { AuthService } from './auth.service';
 import { logBootstrap } from './bootstrap-debug.log';
 
+/**
+ * @deprecated Internal only. Use {@link SessionStore} as the public state entry point for session + access context.
+ */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
   private readonly authService = inject(AuthService);

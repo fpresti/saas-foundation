@@ -3,7 +3,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import type { NormalizedError } from '../../core/utils/supabase-error.util';
 import { AuthService } from '../../core/auth/auth.service';
-import { AuthStore } from '../../core/auth/auth.store';
+import { SessionStore } from '../../core/auth/session.store';
 
 @Component({
   selector: 'app-login',
@@ -15,12 +15,12 @@ import { AuthStore } from '../../core/auth/auth.store';
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
-  readonly authStore = inject(AuthStore);
+  readonly sessionStore = inject(SessionStore);
   private readonly router = inject(Router);
 
   constructor() {
     effect(() => {
-      if (this.authStore.session()) {
+      if (this.sessionStore.session()) {
         this.router.navigateByUrl('/');
       }
     });
@@ -68,7 +68,7 @@ export class LoginComponent {
 
   async signInWithPassword(): Promise<void> {
     if (this.form.invalid) return;
-    const ok = await this.authStore.signIn(
+    const ok = await this.sessionStore.signIn(
       this.form.getRawValue().email,
       this.form.getRawValue().password
     );

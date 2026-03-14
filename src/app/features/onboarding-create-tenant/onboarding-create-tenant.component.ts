@@ -8,7 +8,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import type { NormalizedError } from '../../core/utils/supabase-error.util';
 import { TenantOnboardingService } from '../../core/tenant/tenant-onboarding.service';
-import { AccessContextStore } from '../access-context';
+import { SessionStore } from '../../core/auth/session.store';
 
 @Component({
   selector: 'app-onboarding-create-tenant',
@@ -20,7 +20,7 @@ import { AccessContextStore } from '../access-context';
 export class OnboardingCreateTenantComponent {
   private readonly fb = inject(FormBuilder);
   private readonly tenantOnboarding = inject(TenantOnboardingService);
-  private readonly accessContextStore = inject(AccessContextStore);
+  private readonly sessionStore = inject(SessionStore);
   private readonly router = inject(Router);
 
   readonly loading = signal(false);
@@ -45,7 +45,7 @@ export class OnboardingCreateTenantComponent {
       this.error.set(result.error);
       return;
     }
-    await this.accessContextStore.load();
+    await this.sessionStore.loadAccessContext();
     this.router.navigateByUrl('/');
   }
 

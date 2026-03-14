@@ -50,7 +50,7 @@
           <a routerLink="/sign-up" class="underline">Create account</a>
         </p>
       } @else {
-        @if (authStore.signInError(); as err) {
+        @if (sessionStore.signInError(); as err) {
           <p class="mt-2 text-sm" role="alert">{{ err.message }}</p>
         }
         <form class="mt-4 space-y-4" [formGroup]="form" (ngSubmit)="signInWithPassword()">

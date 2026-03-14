@@ -4,8 +4,8 @@ import { logBootstrap } from './bootstrap-debug.log';
 import { AuthStore } from './auth.store';
 
 /**
- * Facade over AuthStore + AccessContextStore. Single entry point for session + access context.
- * Does not own duplicate state; delegates to existing stores.
+ * Single public entry point for session + access context.
+ * Delegates to internal AuthStore / AccessContextStore (do not inject those from features).
  */
 @Injectable({ providedIn: 'root' })
 export class SessionStore {
@@ -14,6 +14,9 @@ export class SessionStore {
 
   /** Supabase session (owned by AuthStore). */
   readonly session = this.authStore.session;
+
+  /** Password sign-in error (owned by AuthStore). */
+  readonly signInError = this.authStore.signInError;
 
   /** Current RPC access context; read-only view of AccessContextStore.context. */
   readonly accessContext = computed(() => this.accessContextStore.context());
@@ -56,6 +59,18 @@ export class SessionStore {
     await this.authStore.signOut();
   }
 
+  /** Password sign-in; loads access context on success (delegates to AuthStore). */
+  async signIn(email: string, password: string): Promise<boolean> {
+    return this.authStore.signIn(email, password);
+  }
+
+  /**
+   * Load access context from RPC. Omit tenantId for default/server context (e.g. after onboarding).
+   */
+  async loadAccessContext(tenantId?: string | null): Promise<void> {
+    await this.accessContextStore.load(tenantId);
+  }
+
   /**
    * Session listener + optional access context load (same sequence as App bootstrap).
    */
@@ -82,9 +97,9 @@ export class SessionStore {
     });
   }
 
-  /** Reload access context from RPC (current or default server context). */
+  /** Reload access context from RPC for the current active tenant id. */
   async refreshAccessContext(): Promise<void> {
-    await this.accessContextStore.load(this.activeTenantId());
+    await this.loadAccessContext(this.activeTenantId());
   }
 
   /** Load access context once if not already ready (for guards after bootstrap). */
