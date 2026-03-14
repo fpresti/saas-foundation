@@ -5,8 +5,12 @@
     <h1 class="text-lg font-semibold">No se pudo cargar el contexto de acceso</h1>
     <p class="mt-2 text-sm opacity-90">{{ sessionStore.accessContextError() }}</p>
     <p class="mt-2 text-sm opacity-80">
-      Revisa que la función RPC <code class="rounded bg-[var(--color-bg-secondary)] px-1">get_access_context</code>
-      exista en Supabase y devuelva una fila. Si el cuerpo viene vacío, el backend o RLS suelen ser la causa.
+      Si el error menciona <code class="rounded bg-[var(--color-bg-secondary)] px-1">tenant_users</code>, en Supabase
+      aún hay funciones viejas: ejecuta el SQL del repo
+      <code class="rounded bg-[var(--color-bg-secondary)] px-1">supabase/FIX_RUN_IN_SUPABASE_SQL_EDITOR.sql</code>
+      (actualiza <code class="rounded bg-[var(--color-bg-secondary)] px-1">is_tenant_member</code> y
+      <code class="rounded bg-[var(--color-bg-secondary)] px-1">get_access_context</code>).
+      Si el cuerpo viene vacío, suele ser RLS.
     </p>
     <button
       type="button"
