@@ -1,5 +1,6 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, Injector, signal } from '@angular/core';
 import { AccessContextService } from '../../../core/auth/access-context.service';
+import { PermissionService } from '../../../core/auth/permission.service';
 import { logBootstrap, logBootstrapWarn } from '../../../core/auth/bootstrap-debug.log';
 import type { AccessContext, AccessContextStatus } from '../types';
 import { AppResetService } from '../../../core/services/app-reset.service';
@@ -11,6 +12,7 @@ import { AppResetService } from '../../../core/services/app-reset.service';
 export class AccessContextStore {
   private readonly service = inject(AccessContextService);
   private readonly appReset = inject(AppResetService);
+  private readonly injector = inject(Injector);
 
   readonly context = signal<AccessContext | null>(null);
   readonly status = signal<AccessContextStatus>('idle');
@@ -115,5 +117,10 @@ export class AccessContextStore {
     this.context.set(null);
     this.status.set('idle');
     this.error.set(null);
+    try {
+      this.injector.get(PermissionService).clearCache();
+    } catch {
+      /* avoid hard failure if DI edge case */
+    }
   }
 }

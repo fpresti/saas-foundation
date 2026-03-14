@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { permissionGuard } from './core/auth/permission.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
@@ -57,8 +58,15 @@ export const routes: Routes = [
       },
       {
         path: 'users',
-        canActivate: [onboardingGuard],
+        canActivate: [onboardingGuard, permissionGuard],
+        data: { permission: 'tenant.members.read' },
         component: UsersPlaceholderComponent,
+      },
+      {
+        path: 'roles',
+        canActivate: [onboardingGuard, permissionGuard],
+        data: { permission: 'tenant.roles.read' },
+        component: SettingsPlaceholderComponent,
       }
     ]
   },
