@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
-import { getSupabaseClient } from '../supabase/supabase.client';
+import { Injectable, inject } from '@angular/core';
+import { SupabaseService } from '../supabase/supabase.service';
 import { NormalizedError, normalizeError } from '../utils/supabase-error.util';
 
 @Injectable({ providedIn: 'root' })
 export class TenantOnboardingService {
-  private readonly supabase = getSupabaseClient();
+  private readonly supabase = inject(SupabaseService).client;
 
   /**
    * Create a new tenant with the current user as owner.

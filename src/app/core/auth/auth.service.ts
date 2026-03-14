@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Session } from '@supabase/supabase-js';
-import { getSupabaseClient } from '../supabase/supabase.client';
+import { SupabaseService } from '../supabase/supabase.service';
 import { NormalizedError, normalizeAuthError, normalizeError } from '../utils/supabase-error.util';
 
 export type SignInResult =
@@ -10,7 +10,7 @@ export type SignOutResult = { error?: NormalizedError };
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly supabase = getSupabaseClient();
+  private readonly supabase = inject(SupabaseService).client;
 
   /** Get current session. Call once at bootstrap. */
   async getSession(): Promise<Session | null> {

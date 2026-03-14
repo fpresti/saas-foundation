@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -22,7 +22,7 @@ export type Database = {
           email: string
           expires_at: string
           id: string
-          role: string
+          member_type: string
           sent_at: string | null
           tenant_id: string
           token_hash: string
@@ -35,7 +35,7 @@ export type Database = {
           email: string
           expires_at: string
           id?: string
-          role: string
+          member_type: string
           sent_at?: string | null
           tenant_id: string
           token_hash: string
@@ -48,7 +48,7 @@ export type Database = {
           email?: string
           expires_at?: string
           id?: string
-          role?: string
+          member_type?: string
           sent_at?: string | null
           tenant_id?: string
           token_hash?: string
@@ -63,6 +63,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      permissions: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       plans: {
         Row: {
@@ -88,27 +115,6 @@ export type Database = {
           name?: string
           price?: number | null
           updated_at?: string
-        }
-        Relationships: []
-      }
-      platform_users: {
-        Row: {
-          created_at: string
-          platform_role: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          platform_role: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          platform_role?: string
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -160,22 +166,84 @@ export type Database = {
           },
         ]
       }
-      super_admins: {
+      role_permissions: {
         Row: {
           created_at: string
-          user_id: string
+          permission_id: string
+          role_id: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
-          user_id: string
+          permission_id: string
+          role_id: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
-          user_id?: string
+          permission_id?: string
+          role_id?: string
+          updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "role_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "role_permissions_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      tenant_subscriptions: {
+      roles: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
         Row: {
           created_at: string
           current_period_end: string | null
@@ -205,14 +273,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "tenant_subscriptions_plan_id_fkey"
+            foreignKeyName: "subscriptions_plan_id_fkey"
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "tenant_subscriptions_tenant_id_fkey"
+            foreignKeyName: "subscriptions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: true
             referencedRelation: "tenants"
@@ -220,31 +288,85 @@ export type Database = {
           },
         ]
       }
-      tenant_users: {
+      super_admins: {
         Row: {
           created_at: string
-          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tenant_member_roles: {
+        Row: {
+          created_at: string
+          role_id: string
           tenant_id: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
-          role: string
+          role_id: string
           tenant_id: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
-          role?: string
+          role_id?: string
           tenant_id?: string
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "tenant_users_tenant_id_fkey"
+            foreignKeyName: "tenant_member_roles_role_id_fkey"
+            columns: ["role_id"]
+            isOneToOne: false
+            referencedRelation: "roles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_member_roles_tenant_user_fkey"
+            columns: ["tenant_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "tenant_members"
+            referencedColumns: ["tenant_id", "user_id"]
+          },
+        ]
+      }
+      tenant_members: {
+        Row: {
+          created_at: string
+          member_type: string
+          tenant_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          member_type: string
+          tenant_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          member_type?: string
+          tenant_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_members_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -282,6 +404,21 @@ export type Database = {
         }
         Relationships: []
       }
+      test: {
+        Row: {
+          id: number
+          name: string | null
+        }
+        Insert: {
+          id?: number
+          name?: string | null
+        }
+        Update: {
+          id?: number
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -291,22 +428,26 @@ export type Database = {
         Args: { p_token: string }
         Returns: {
           invitation_id: string
-          role: string
+          member_type: string
           tenant_id: string
         }[]
+      }
+      assign_tenant_user_role: {
+        Args: { p_role_id: string; p_tenant_id: string; p_user_id: string }
+        Returns: undefined
       }
       create_invitation: {
         Args: {
           p_email: string
           p_expires_in_hours?: number
-          p_role?: string
+          p_member_type?: string
           p_tenant_id: string
         }
         Returns: {
           email: string
           expires_at: string
           invitation_id: string
-          role: string
+          member_type: string
           tenant_id: string
           token: string
         }[]
@@ -334,6 +475,10 @@ export type Database = {
           tenant_status: string
         }[]
       }
+      has_permission: {
+        Args: { p_permission_code: string; p_tenant_id: string }
+        Returns: boolean
+      }
       has_tenant_role: {
         Args: { p_roles: string[]; p_tenant_id: string }
         Returns: boolean
@@ -341,6 +486,7 @@ export type Database = {
       hash_token: { Args: { p_token: string }; Returns: string }
       is_super_admin: { Args: never; Returns: boolean }
       is_tenant_member: { Args: { p_tenant_id: string }; Returns: boolean }
+      is_tenant_owner: { Args: { p_tenant_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

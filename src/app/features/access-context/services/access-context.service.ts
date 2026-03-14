@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
-import { getSupabaseClient } from '../../../core/supabase/supabase.client';
+import { Injectable, inject } from '@angular/core';
+import { SupabaseService } from '../../../core/supabase/supabase.service';
 import { NormalizedError, normalizeError } from '../../../core/utils/supabase-error.util';
 import type { AccessContext } from '../types';
 
 @Injectable({ providedIn: 'root' })
 export class AccessContextService {
-  private readonly supabase = getSupabaseClient();
+  private readonly supabase = inject(SupabaseService).client;
 
   /**
    * Fetches access context from RPC. Pass tenantId to switch tenant context.

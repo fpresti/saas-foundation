@@ -1,19 +1,30 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
-import type { Database } from './database.types';
+import type { Database } from '../../../types/supabase';
 
-let client: SupabaseClient<Database> | null = null;
+let singleton: SupabaseClient<Database> | null = null;
 
 /**
- * Single Supabase client source for the app. Uses environment variables.
- * Do not create additional Supabase instances in features.
+ * Creates a browser Supabase client (typed with generated Database).
+ * Prefer using {@link SupabaseService} via DI so the app shares one instance.
+ */
+export function createSupabaseBrowserClient(
+  supabaseUrl: string,
+  supabaseAnonKey: string
+): SupabaseClient<Database> {
+  return createClient<Database>(supabaseUrl, supabaseAnonKey);
+}
+
+/**
+ * Single shared client for the app (Angular environment).
+ * Used only by {@link SupabaseService}; do not call from features or components.
  */
 export function getSupabaseClient(): SupabaseClient<Database> {
-  if (!client) {
-    client = createClient<Database>(
+  if (!singleton) {
+    singleton = createSupabaseBrowserClient(
       environment.supabaseUrl,
       environment.supabaseAnonKey
     );
   }
-  return client;
+  return singleton;
 }

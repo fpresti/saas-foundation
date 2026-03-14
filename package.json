@@ -8,7 +8,7 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "feature:new": "node scripts/new-feature.mjs",
-    "supabase:types": "supabase gen types typescript --project-id ynwlidadbattxknclxyd --schema public > src/app/core/supabase/database.types.ts"
+    "supabase:types": "supabase gen types typescript --project-id ynwlidadbattxknclxyd --schema public > src/types/supabase.ts"
   },
   "prettier": {
     "printWidth": 100,
