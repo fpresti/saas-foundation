@@ -1,7 +1,6 @@
 import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { AuthStore } from '../auth/auth.store';
-import { AccessContextStore } from '../../features/access-context';
+import { SessionStore } from '../auth/session.store';
 
 @Component({
   selector: 'app-app-shell',
@@ -11,28 +10,27 @@ import { AccessContextStore } from '../../features/access-context';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AppShellComponent {
-  private readonly authStore = inject(AuthStore);
-  private readonly accessContextStore = inject(AccessContextStore);
+  private readonly sessionStore = inject(SessionStore);
   private readonly router = inject(Router);
 
   readonly userName = computed(
-    () => this.authStore.session()?.user?.email ?? '—'
+    () => this.sessionStore.session()?.user?.email ?? '—'
   );
 
   readonly activeTenantName = computed(
-    () => this.accessContextStore.activeTenant()?.name ?? '—'
+    () => this.sessionStore.activeTenant()?.name ?? '—'
   );
 
   readonly canSwitchTenant = computed(
-    () => this.accessContextStore.allowedTenants().length > 1
+    () => this.sessionStore.allowedTenants().length > 1
   );
 
   readonly hasActiveTenant = computed(
-    () => this.accessContextStore.activeTenant() !== null
+    () => this.sessionStore.activeTenant() !== null
   );
 
   async signOut(): Promise<void> {
-    await this.authStore.signOut();
+    await this.sessionStore.signOut();
     await this.router.navigateByUrl('/login');
   }
 

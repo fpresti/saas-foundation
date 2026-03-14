@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { logBootstrap, logBootstrapWarn } from './bootstrap-debug.log';
 import { SupabaseService } from '../supabase/supabase.service';
 import { NormalizedError, normalizeError } from '../utils/supabase-error.util';
 import type { AccessContext } from '../../../types/access-context.types';
@@ -11,16 +12,36 @@ export class AccessContextService {
    * Fetches access context from RPC. Pass tenantId to switch tenant context.
    */
   async getAccessContext(tenantId?: string | null): Promise<AccessContext> {
+    logBootstrap('RPC get_access_context request', { p_tenant_id: tenantId ?? null });
     const { data, error } = await this.supabase.rpc('get_access_context', {
       p_tenant_id: tenantId ?? undefined,
     });
 
     const normalized = normalizeError(error);
-    if (normalized) throw normalized;
+    if (normalized) {
+      logBootstrapWarn('RPC get_access_context supabase error', normalized);
+      throw normalized;
+    }
 
-    const row = data?.[0];
-    if (!row) {
-      throw { code: 'empty', message: 'get_access_context returned no data' } as NormalizedError;
+    logBootstrap('RPC get_access_context raw data', {
+      type: data === null ? 'null' : Array.isArray(data) ? 'array' : typeof data,
+      length: Array.isArray(data) ? data.length : null,
+      sample: Array.isArray(data) && data[0] ? Object.keys(data[0] as object) : null,
+    });
+
+    // RPC should return one row; if empty (RLS, stale deploy, client quirk), use safe default
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row == null || typeof row !== 'object') {
+      logBootstrapWarn(
+        'RPC get_access_context empty row → using default context (revisa SQL / RLS / migraciones)'
+      );
+      return {
+        is_super_admin: false,
+        tenant_id: null,
+        tenant_role: null,
+        tenant_status: null,
+        allowed_tenants: [],
+      };
     }
 
     const role = row.tenant_role;

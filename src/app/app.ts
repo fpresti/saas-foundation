@@ -20,4 +20,8 @@ export class App implements OnInit {
   private async bootstrap(): Promise<void> {
     await this.sessionStore.initialize();
   }
+
+  reload(): void {
+    window.location.reload();
+  }
 }

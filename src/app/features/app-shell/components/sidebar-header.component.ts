@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import { AuthStore } from '../../../core/auth/auth.store';
-import { AccessContextStore } from '../../access-context';
+import { SessionStore } from '../../../core/auth/session.store';
 import { NavIconComponent } from './nav-icon.component';
 import { LayoutUiStore } from '../stores/layout-ui.store';
 
@@ -14,28 +13,27 @@ import { LayoutUiStore } from '../stores/layout-ui.store';
 })
 export class SidebarHeaderComponent {
   readonly showCloseButton = input<boolean>(false);
-  protected readonly authStore = inject(AuthStore);
+  protected readonly sessionStore = inject(SessionStore);
   protected readonly layoutStore = inject(LayoutUiStore);
-  protected readonly accessContextStore = inject(AccessContextStore);
   private readonly router = inject(Router);
 
   readonly userName = computed(
-    () => this.authStore.session()?.user?.email ?? '—'
+    () => this.sessionStore.session()?.user?.email ?? '—'
   );
   readonly activeTenantName = computed(
-    () => this.accessContextStore.activeTenant()?.name ?? '—'
+    () => this.sessionStore.activeTenant()?.name ?? '—'
   );
   readonly canSwitchTenant = computed(
     () =>
-      this.accessContextStore.isSuperAdmin() &&
-      this.accessContextStore.allowedTenants().length > 1
+      this.sessionStore.isSuperAdmin() &&
+      this.sessionStore.allowedTenants().length > 1
   );
   readonly hasActiveTenant = computed(
-    () => this.accessContextStore.activeTenant() !== null
+    () => this.sessionStore.activeTenant() !== null
   );
 
   async signOut(): Promise<void> {
-    await this.authStore.signOut();
+    await this.sessionStore.signOut();
     await this.router.navigateByUrl('/login');
   }
 

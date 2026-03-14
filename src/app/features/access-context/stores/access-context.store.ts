@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { AccessContextService } from '../../../core/auth/access-context.service';
+import { logBootstrap, logBootstrapWarn } from '../../../core/auth/bootstrap-debug.log';
 import type { AccessContext, AccessContextStatus } from '../types';
 import { AppResetService } from '../../../core/services/app-reset.service';
 
@@ -44,20 +45,55 @@ export class AccessContextStore {
     );
   };
 
+  private static readonly LOAD_TIMEOUT_MS = 20_000;
+
+  /** Evita varias llamadas RPC en paralelo con el mismo tenant (bootstrap + guards). */
+  private loadInflight: Promise<void> | null = null;
+  private loadInflightKey: string | null = null;
+
   /**
    * Load access context. Call with no args at bootstrap; pass tenantId when user selects a tenant.
    */
   async load(tenantId?: string | null): Promise<void> {
+    const key = tenantId ?? '';
+    if (this.loadInflight && this.loadInflightKey === key) {
+      logBootstrap('AccessContextStore.load skipped (already in flight)', { tenantId: key || null });
+      return this.loadInflight;
+    }
+    this.loadInflightKey = key;
+    this.loadInflight = this.runLoad(tenantId).finally(() => {
+      this.loadInflight = null;
+      this.loadInflightKey = null;
+    });
+    return this.loadInflight;
+  }
+
+  private async runLoad(tenantId?: string | null): Promise<void> {
+    logBootstrap('AccessContextStore.load start', { tenantId: tenantId ?? null });
     this.status.set('loading');
     this.error.set(null);
     try {
-      const ctx = await this.service.getAccessContext(tenantId);
+      const ctx = await Promise.race([
+        this.service.getAccessContext(tenantId),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error('get_access_context timed out')),
+            AccessContextStore.LOAD_TIMEOUT_MS
+          )
+        ),
+      ]);
       this.context.set(ctx);
       this.status.set('ready');
+      logBootstrap('AccessContextStore.load ok', {
+        is_super_admin: ctx.is_super_admin,
+        tenant_id: ctx.tenant_id,
+        allowedTenantsCount: ctx.allowed_tenants?.length ?? 0,
+      });
     } catch (e) {
       const message = e && typeof e === 'object' && 'message' in e
         ? String((e as { message: unknown }).message)
         : 'Failed to load access context';
+      logBootstrapWarn('AccessContextStore.load error', message, e);
       this.error.set(message);
       this.context.set(null);
       this.status.set('error');

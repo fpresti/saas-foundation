@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import type { NormalizedError } from '../utils/supabase-error.util';
 import { AccessContextStore } from '../../features/access-context';
 import { AuthService } from './auth.service';
+import { logBootstrap } from './bootstrap-debug.log';
 
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
@@ -25,11 +26,26 @@ export class AuthStore {
     try {
       const session = await this.authService.getSession();
       this.session.set(session);
+      logBootstrap('AuthStore.initialize getSession', {
+        hasSession: !!session,
+        userId: session?.user?.id ?? null,
+      });
 
       this.unsubscribeAuthChanges = this.authService.onAuthStateChange((s) => {
+        const st = this.accessContextStore.status();
+        logBootstrap('onAuthStateChange', {
+          hasSession: !!s,
+          accessContextStatus: st,
+        });
         this.session.set(s);
         if (s === null) {
           this.accessContextStore.reset();
+        } else {
+          // Solo cargar en idle: si status es error, cada TOKEN_REFRESHED re-disparaba load() → bucle + lentitud.
+          if (st === 'idle') {
+            logBootstrap('Scheduling accessContext.load() from onAuthStateChange (idle)');
+            void this.accessContextStore.load();
+          }
         }
       });
     } catch {

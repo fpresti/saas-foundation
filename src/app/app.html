@@ -1,5 +1,21 @@
 @if (sessionStore.loading()) {
-  <p>Loading…</p>
+  <p class="p-4 text-[var(--color-fg-default)]">Loading…</p>
+} @else if (sessionStore.isAuthenticated() && sessionStore.accessContextStatus() === 'error') {
+  <div class="mx-auto max-w-md p-6 text-[var(--color-fg-default)]">
+    <h1 class="text-lg font-semibold">No se pudo cargar el contexto de acceso</h1>
+    <p class="mt-2 text-sm opacity-90">{{ sessionStore.accessContextError() }}</p>
+    <p class="mt-2 text-sm opacity-80">
+      Revisa que la función RPC <code class="rounded bg-[var(--color-bg-secondary)] px-1">get_access_context</code>
+      exista en Supabase y devuelva una fila. Si el cuerpo viene vacío, el backend o RLS suelen ser la causa.
+    </p>
+    <button
+      type="button"
+      class="mt-4 rounded border border-[var(--color-border-default)] px-3 py-2"
+      (click)="sessionStore.clear(); reload()"
+    >
+      Cerrar sesión y recargar
+    </button>
+  </div>
 } @else {
   <router-outlet />
 }

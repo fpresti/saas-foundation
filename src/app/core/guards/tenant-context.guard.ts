@@ -2,11 +2,28 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router, UrlTree } from '@angular/router';
 import { SessionStore } from '../auth/session.store';
 
-export const tenantContextGuard: CanActivateFn = async (): Promise<boolean | UrlTree> => {
+/**
+ * Evita bucle infinito: si ya vamos a /select-tenant u onboarding, no redirigir otra vez
+ * al mismo sitio (el guard del padre se ejecuta también en rutas hijas).
+ */
+function isTenantSelectionOrOnboardingPath(url: string): boolean {
+  const path = url.split('?')[0];
+  return (
+    path === '/select-tenant' ||
+    path.startsWith('/select-tenant/') ||
+    path.startsWith('/onboarding/create-tenant')
+  );
+}
+
+export const tenantContextGuard: CanActivateFn = async (route, state): Promise<boolean | UrlTree> => {
   const sessionStore = inject(SessionStore);
   const router = inject(Router);
 
   await sessionStore.ensureAccessContextReady();
+
+  if (isTenantSelectionOrOnboardingPath(state.url)) {
+    return true;
+  }
 
   const ctx = sessionStore.accessContext();
 

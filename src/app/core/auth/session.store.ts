@@ -1,5 +1,6 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { AccessContextStore } from '../../features/access-context';
+import { logBootstrap } from './bootstrap-debug.log';
 import { AuthStore } from './auth.store';
 
 /**
@@ -23,13 +24,14 @@ export class SessionStore {
 
   /**
    * True while session is resolving or, when authenticated, until access context is ready.
-   * Matches App shell gating: auth loading OR authenticated with context not yet ready.
+   * Stops on 'error' so the shell is not stuck forever if get_access_context fails or returns empty.
    */
   readonly loading = computed(
     () =>
       this.authStore.isLoading() ||
       (this.authStore.isAuthenticated() &&
-        this.accessContextStore.status() !== 'ready')
+        this.accessContextStore.status() !== 'ready' &&
+        this.accessContextStore.status() !== 'error')
   );
 
   readonly isAuthenticated = this.authStore.isAuthenticated;
@@ -45,16 +47,39 @@ export class SessionStore {
   /** Resolved allowed tenant + role; derived via AccessContextStore rules. */
   readonly activeTenant = computed(() => this.accessContextStore.activeTenant());
 
+  /** Access context load lifecycle (for tenant-select etc.). */
+  readonly accessContextStatus = computed(() => this.accessContextStore.status());
+  readonly accessContextError = computed(() => this.accessContextStore.error());
+
+  /** Same as AuthStore.signOut (awaitable for shell logout + navigate). */
+  async signOut(): Promise<void> {
+    await this.authStore.signOut();
+  }
+
   /**
    * Session listener + optional access context load (same sequence as App bootstrap).
    */
   async initialize(): Promise<void> {
+    logBootstrap('SessionStore.initialize start');
     await this.authStore.initialize();
-    if (this.authStore.isAuthenticated()) {
-      await this.accessContextStore.load();
+    const authed = this.authStore.isAuthenticated();
+    logBootstrap('SessionStore.initialize after auth', {
+      isAuthenticated: authed,
+      accessContextStatus: this.accessContextStore.status(),
+    });
+    if (authed) {
+      try {
+        await this.accessContextStore.load();
+      } catch {
+        logBootstrap('SessionStore.initialize load() failed (status should be error)');
+      }
     } else {
       this.accessContextStore.reset();
     }
+    logBootstrap('SessionStore.initialize end', {
+      accessContextStatus: this.accessContextStore.status(),
+      loading: this.loading(),
+    });
   }
 
   /** Reload access context from RPC (current or default server context). */
