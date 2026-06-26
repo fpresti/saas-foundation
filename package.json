@@ -8,7 +8,17 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "feature:new": "node scripts/new-feature.mjs",
-    "supabase:types": "supabase gen types typescript --project-id ynwlidadbattxknclxyd --schema public > src/types/supabase.ts"
+    "issues:mvp": "node scripts/create-mvp-github-issues.mjs",
+    "supabase:types": "supabase gen types typescript --project-id ynwlidadbattxknclxyd --schema public > src/types/supabase.ts",
+    "verify:db-sync": "node scripts/verify/db-sync.mjs",
+    "verify:seed-users": "node scripts/verify/seed-dev-users.mjs",
+    "verify:setup": "node scripts/verify/setup.mjs",
+    "verify:tenant-onboarding": "node scripts/verify/tenant-onboarding.mjs",
+    "verify:members-permissions": "node scripts/verify/members-permissions.mjs",
+    "verify:invitations": "node scripts/verify/invitations.mjs",
+    "verify:roles-read": "node scripts/verify/roles-read.mjs",
+    "verify:tenant-settings": "node scripts/verify/tenant-settings.mjs",
+    "verify:all": "node scripts/verify/run-all.mjs"
   },
   "prettier": {
     "printWidth": 100,

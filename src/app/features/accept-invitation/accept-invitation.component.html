@@ -1,0 +1,21 @@
+<section class="mx-auto max-w-md p-6">
+  <h1 class="text-lg font-semibold">Accept invitation</h1>
+
+  @if (!token()) {
+    <p class="mt-2 text-sm">Missing invitation token in the link.</p>
+    <a class="mt-4 inline-block underline" routerLink="/login">Go to login</a>
+  } @else if (store.isLoading()) {
+    <p class="mt-2 text-sm">Accepting invitation…</p>
+  } @else if (store.error()) {
+    <p class="mt-2 text-sm">{{ store.error()!.message }}</p>
+    <button
+      type="button"
+      class="mt-4 rounded border border-[var(--color-border-default)] px-3 py-2"
+      (click)="retry()"
+    >
+      Try again
+    </button>
+  } @else if (store.successTenantId()) {
+    <p class="mt-2 text-sm">Invitation accepted. Redirecting…</p>
+  }
+</section>

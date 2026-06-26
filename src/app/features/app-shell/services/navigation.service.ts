@@ -17,8 +17,9 @@ export class NavigationService {
         id: 'settings',
         label: 'Configuración',
         items: [
-          { label: 'Settings', icon: 'settings', routerLink: '/settings', disabled: true },
-          { label: 'Members', icon: 'users', routerLink: '/members' },
+          { label: 'Settings', icon: 'settings', routerLink: '/settings', permission: 'tenant.settings.read' },
+          { label: 'Members', icon: 'users', routerLink: '/members', permission: 'tenant.members.read' },
+          { label: 'Roles', icon: 'shield', routerLink: '/roles', permission: 'tenant.roles.read' },
         ],
       },
     ];

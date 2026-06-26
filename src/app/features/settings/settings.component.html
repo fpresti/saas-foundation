@@ -1,0 +1,31 @@
+<div class="mx-auto max-w-lg text-[var(--color-text-primary)]">
+  <h1 class="text-2xl font-semibold">Settings</h1>
+  <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Tenant profile</p>
+
+  @if (store.error(); as err) {
+    <p class="mt-4 text-sm text-red-600 dark:text-red-400">{{ err.message }}</p>
+  } @else if (store.isLoading()) {
+    <p class="mt-4 text-sm">Loading…</p>
+  } @else if (store.tenant(); as t) {
+    <dl class="mt-6 space-y-3 text-sm">
+      <div>
+        <dt class="text-[var(--color-text-secondary)]">Name</dt>
+        <dd class="font-medium">{{ t.name }}</dd>
+      </div>
+      <div>
+        <dt class="text-[var(--color-text-secondary)]">Slug</dt>
+        <dd>{{ t.slug }}</dd>
+      </div>
+      <div>
+        <dt class="text-[var(--color-text-secondary)]">Status</dt>
+        <dd>{{ t.status }}</dd>
+      </div>
+      <div>
+        <dt class="text-[var(--color-text-secondary)]">Tax ID</dt>
+        <dd>{{ t.taxId }}</dd>
+      </div>
+    </dl>
+  } @else {
+    <p class="mt-4 text-sm">No tenant data.</p>
+  }
+</div>

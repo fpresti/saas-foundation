@@ -14,6 +14,13 @@ export type CreateInvitationResult = {
   token: string;
 };
 
+export type PendingInvitation = {
+  id: string;
+  email: string;
+  memberType: string;
+  expiresAt: string;
+};
+
 @Injectable({ providedIn: 'root' })
 export class MembersService {
   private readonly supabase = inject(SupabaseService).client;
@@ -173,5 +180,24 @@ export class MembersService {
     });
     const n = normalizeError(error);
     if (n) throw n;
+  }
+
+  async listPendingInvitations(tenantId: string): Promise<PendingInvitation[]> {
+    const { data, error } = await this.supabase
+      .from('invitations')
+      .select('id, email, member_type, expires_at')
+      .eq('tenant_id', tenantId)
+      .is('accepted_at', null)
+      .gt('expires_at', new Date().toISOString())
+      .order('expires_at');
+
+    const n = normalizeError(error);
+    if (n) throw n;
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      email: row.email,
+      memberType: row.member_type,
+      expiresAt: row.expires_at,
+    }));
   }
 }

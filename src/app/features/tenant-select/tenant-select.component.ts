@@ -65,13 +65,6 @@ export class TenantSelectComponent {
       onClick: (row) => this.selectTenant(row.id),
       disabled: (row) => row.status === 'Active',
     },
-    {
-      id: 'test',
-      label: 'Test',
-      kind: 'neutral',
-      onClick: () => alert('test'),
-      disabled: () => false,
-    }
   ];
 
   async selectTenant(id: string): Promise<void> {

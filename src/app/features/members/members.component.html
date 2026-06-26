@@ -15,23 +15,23 @@
     <div class="flex shrink-0 gap-2">
       <button
         type="button"
-        [disabled]="!canInvite()"
+        [disabled]="!store.canInvite()"
         (click)="openInvite()"
         class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-        [title]="canInvite() ? 'Send invitation' : 'Requires tenant.members.invite'"
+        [title]="store.canInvite() ? 'Send invitation' : 'Requires tenant.members.invite'"
       >
         Invite member
       </button>
     </div>
   </header>
 
-  @if (membersError(); as err) {
+  @if (store.error(); as err) {
     <div
       class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 text-sm text-red-600 dark:text-red-400"
       role="alert"
     >
       <p class="font-medium">Could not load members</p>
-      <p class="mt-1 opacity-90">{{ err }}</p>
+      <p class="mt-1 opacity-90">{{ err.message }}</p>
       <button
         type="button"
         (click)="retryLoad()"
@@ -40,7 +40,7 @@
         Retry
       </button>
     </div>
-  } @else if (membersLoading()) {
+  } @else if (store.isLoading()) {
     <div
       class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-12 text-center text-sm text-[var(--color-text-secondary)]"
       role="status"
@@ -50,16 +50,32 @@
     </div>
   } @else {
     <app-data-table
-      [rows]="tableRows()"
+      [rows]="store.tableRows()"
       [columns]="columns"
       [actions]="actions"
       emptyTitle="No members yet"
       emptyDescription="This tenant has no member rows yet, or you cannot see them."
     />
+
+    @if (store.pendingInvitations().length > 0) {
+      <section class="mt-8">
+        <h2 class="mb-3 text-lg font-semibold">Pending invitations</h2>
+        <ul class="divide-y divide-[var(--color-border-default)] rounded border border-[var(--color-border-default)]">
+          @for (inv of store.pendingInvitations(); track inv.id) {
+            <li class="flex flex-col gap-1 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <span>{{ inv.email }}</span>
+              <span class="text-[var(--color-text-secondary)]">
+                {{ inv.memberType }} · expires {{ inv.expiresAt | date : 'medium' }}
+              </span>
+            </li>
+          }
+        </ul>
+      </section>
+    }
   }
 </div>
 
-@if (inviteOpen()) {
+@if (store.inviteOpen()) {
   <div
     class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
     role="dialog"
@@ -70,7 +86,7 @@
       class="w-full max-w-md rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 shadow-xl"
     >
       <h2 id="invite-title" class="text-lg font-semibold">Invite member</h2>
-      @if (inviteResult(); as r) {
+      @if (store.inviteResult(); as r) {
         <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
           Invitation created. Share this link token (expires {{ r.expiresAt | date : 'medium' }}):
         </p>
@@ -99,20 +115,20 @@
         <input
           type="email"
           class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
-          [ngModel]="inviteEmail()"
-          (ngModelChange)="inviteEmail.set($event)"
+          [ngModel]="store.inviteEmail()"
+          (ngModelChange)="store.inviteEmail.set($event)"
           placeholder="colleague@example.com"
         />
         <label class="mt-3 block text-sm font-medium">Member type</label>
         <select
           class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
-          [ngModel]="inviteMemberType()"
-          (ngModelChange)="inviteMemberType.set($event)"
+          [ngModel]="store.inviteMemberType()"
+          (ngModelChange)="store.inviteMemberType.set($event)"
         >
           <option value="member">Member</option>
           <option value="owner">Owner</option>
         </select>
-        @if (inviteError(); as ie) {
+        @if (store.inviteError(); as ie) {
           <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ ie }}</p>
         }
         <div class="mt-4 flex justify-end gap-2">
@@ -125,11 +141,11 @@
           </button>
           <button
             type="button"
-            [disabled]="inviteBusy()"
+            [disabled]="store.inviteBusy()"
             (click)="submitInvite()"
             class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
           >
-            {{ inviteBusy() ? 'Sending…' : 'Send invite' }}
+            {{ store.inviteBusy() ? 'Sending…' : 'Send invite' }}
           </button>
         </div>
       }
@@ -137,7 +153,7 @@
   </div>
 }
 
-@if (manageOpen()) {
+@if (store.manageOpen()) {
   <div
     class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
     role="dialog"
@@ -148,25 +164,25 @@
     >
       <h2 class="text-lg font-semibold">Assign role</h2>
       <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
-        {{ manageUserLabel() }}
+        {{ store.manageUserLabel() }}
       </p>
-      @if (manageBusy() && !tenantRoles().length) {
+      @if (store.manageBusy() && !store.tenantRoles().length) {
         <p class="mt-4 text-sm text-[var(--color-text-secondary)]">Loading roles…</p>
-      } @else if (tenantRoles().length === 0 && !manageBusy()) {
+      } @else if (store.tenantRoles().length === 0 && !store.manageBusy()) {
         <p class="mt-4 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
       } @else {
         <label class="mt-3 block text-sm font-medium">Role</label>
         <select
           class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
-          [ngModel]="manageRoleId()"
-          (ngModelChange)="manageRoleId.set($event)"
+          [ngModel]="store.manageRoleId()"
+          (ngModelChange)="store.manageRoleId.set($event)"
         >
-          @for (r of tenantRoles(); track r.id) {
+          @for (r of store.tenantRoles(); track r.id) {
             <option [value]="r.id">{{ r.name }} ({{ r.code }})</option>
           }
         </select>
       }
-      @if (manageError(); as me) {
+      @if (store.manageError(); as me) {
         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ me }}</p>
       }
       <div class="mt-4 flex justify-end gap-2">
@@ -179,7 +195,7 @@
         </button>
         <button
           type="button"
-          [disabled]="manageBusy() || !manageRoleId()"
+          [disabled]="store.manageBusy() || !store.manageRoleId()"
           (click)="submitAssignRole()"
           class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
         >

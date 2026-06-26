@@ -3,10 +3,7 @@ import { permissionGuard } from './core/auth/permission.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
-import {
-  AppShellPageComponent,
-  SettingsPlaceholderComponent,
-} from './features/app-shell';
+import { AppShellPageComponent } from './features/app-shell';
 
 export const routes: Routes = [
   {
@@ -28,6 +25,11 @@ export const routes: Routes = [
     path: 'reset-password',
     loadChildren: () =>
       import('./features/reset-password/routes').then(m => m.resetPasswordRoutes)
+  },
+  {
+    path: 'accept-invitation',
+    loadChildren: () =>
+      import('./features/accept-invitation/routes').then(m => m.acceptInvitationRoutes)
   },
   {
     path: '',
@@ -52,8 +54,10 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
-        canActivate: [onboardingGuard],
-        component: SettingsPlaceholderComponent,
+        canActivate: [onboardingGuard, permissionGuard],
+        data: { permission: 'tenant.settings.read' },
+        loadChildren: () =>
+          import('./features/settings/routes').then(m => m.settingsRoutes),
       },
       {
         path: 'members',
@@ -71,7 +75,8 @@ export const routes: Routes = [
         path: 'roles',
         canActivate: [onboardingGuard, permissionGuard],
         data: { permission: 'tenant.roles.read' },
-        component: SettingsPlaceholderComponent,
+        loadChildren: () =>
+          import('./features/roles/routes').then(m => m.rolesRoutes),
       }
     ]
   },

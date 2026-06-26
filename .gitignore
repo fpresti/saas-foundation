@@ -45,4 +45,5 @@ Thumbs.db
 
 # Supabase
 supabase/.temp
+.env.test.local
 

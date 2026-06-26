@@ -487,6 +487,7 @@ export type Database = {
       is_super_admin: { Args: never; Returns: boolean }
       is_tenant_member: { Args: { p_tenant_id: string }; Returns: boolean }
       is_tenant_owner: { Args: { p_tenant_id: string }; Returns: boolean }
+      shares_tenant_with_user: { Args: { p_user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

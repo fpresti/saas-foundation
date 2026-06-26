@@ -1,12 +1,26 @@
-<p class="mb-4">Protected area. Tenant context loaded.</p>
+<div class="mx-auto max-w-2xl text-[var(--color-text-primary)]">
+  <h1 class="text-2xl font-semibold">Home</h1>
 
-<section class="max-w-3xl">
-  <h2 class="mb-3 text-lg font-semibold">Data table demo</h2>
-  <app-data-table
-    [rows]="demoRows"
-    [columns]="demoColumns"
-    [actions]="demoActions"
-    emptyTitle="No users"
-    emptyDescription="Add users to see them here."
-  />
-</section>
+  @if (store.error(); as err) {
+    <p class="mt-4 text-sm text-red-600 dark:text-red-400">{{ err.message }}</p>
+  } @else if (store.isLoading()) {
+    <p class="mt-4 text-sm">Loading…</p>
+  } @else if (store.summary(); as s) {
+    <dl class="mt-6 grid gap-4 sm:grid-cols-2">
+      <div class="rounded border border-[var(--color-border-default)] p-4">
+        <dt class="text-xs text-[var(--color-text-secondary)]">Tenant</dt>
+        <dd class="mt-1 font-medium">{{ s.tenantName }}</dd>
+        <dd class="text-sm text-[var(--color-text-secondary)]">{{ s.tenantStatus }}</dd>
+      </div>
+      <div class="rounded border border-[var(--color-border-default)] p-4">
+        <dt class="text-xs text-[var(--color-text-secondary)]">Members</dt>
+        <dd class="mt-1 text-2xl font-semibold">{{ s.memberCount }}</dd>
+      </div>
+      <div class="rounded border border-[var(--color-border-default)] p-4 sm:col-span-2">
+        <dt class="text-xs text-[var(--color-text-secondary)]">Subscription</dt>
+        <dd class="mt-1 font-medium">{{ s.planName ?? '—' }}</dd>
+        <dd class="text-sm text-[var(--color-text-secondary)]">{{ s.subscriptionStatus ?? '—' }}</dd>
+      </div>
+    </dl>
+  }
+</div>

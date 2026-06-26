@@ -6,17 +6,17 @@ import {
   untracked,
 } from '@angular/core';
 import { SessionStore } from '../../core/auth/session.store';
-import { HomeStore } from './home.store';
+import { RolesStore } from './roles.store';
 
 @Component({
-  selector: 'app-home',
+  selector: 'app-roles',
   standalone: true,
-  templateUrl: './home.component.html',
+  templateUrl: './roles.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent {
+export class RolesComponent {
   readonly session = inject(SessionStore);
-  readonly store = inject(HomeStore);
+  readonly store = inject(RolesStore);
 
   constructor() {
     effect(() => {

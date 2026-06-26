@@ -9,6 +9,7 @@ export type NavIcon =
   | 'settings'
   | 'users'
   | 'building'
+  | 'shield'
   | 'menu'
   | 'chevron-left'
   | 'chevron-right';
@@ -17,9 +18,10 @@ export type NavItem = {
   label: string;
   icon: NavIcon;
   routerLink: string;
-  /** Exact match for routerLinkActive (e.g. for '/') */
   exact?: boolean;
   disabled?: boolean;
+  /** When set, item is hidden unless user has this permission (cosmetic). */
+  permission?: string;
 };
 
 export type NavSection = {

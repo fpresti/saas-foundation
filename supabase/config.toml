@@ -1,0 +1,6 @@
+# Linked Supabase project (Genesis dev).
+# CLI: supabase login && supabase link --project-ref ynwlidadbattxknclxyd
+project_id = "ynwlidadbattxknclxyd"
+
+[db]
+major_version = 15

@@ -1,0 +1,35 @@
+<div class="mx-auto max-w-3xl text-[var(--color-text-primary)]">
+  <h1 class="text-2xl font-semibold">Roles</h1>
+  <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+    Tenant roles and assigned permissions (read-only).
+  </p>
+
+  @if (store.error(); as err) {
+    <p class="mt-4 text-sm text-red-600 dark:text-red-400">{{ err.message }}</p>
+  } @else if (store.isLoading()) {
+    <p class="mt-4 text-sm">Loading roles…</p>
+  } @else if (store.roles().length === 0) {
+    <p class="mt-4 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
+  } @else {
+    <ul class="mt-6 space-y-4">
+      @for (role of store.roles(); track role.id) {
+        <li class="rounded border border-[var(--color-border-default)] p-4">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <span class="font-medium">{{ role.name }}</span>
+            <span class="text-xs text-[var(--color-text-secondary)]">{{ role.code }}</span>
+          </div>
+          @if (role.description) {
+            <p class="mt-1 text-sm text-[var(--color-text-secondary)]">{{ role.description }}</p>
+          }
+          @if (role.permissionCodes.length) {
+            <p class="mt-2 text-xs text-[var(--color-text-secondary)]">
+              Permissions: {{ role.permissionCodes.join(', ') }}
+            </p>
+          } @else {
+            <p class="mt-2 text-xs text-[var(--color-text-secondary)]">No permissions assigned.</p>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

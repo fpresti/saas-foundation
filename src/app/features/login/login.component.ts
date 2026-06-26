@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, effect, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { NormalizedError } from '../../core/utils/supabase-error.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { SessionStore } from '../../core/auth/session.store';
@@ -17,11 +17,13 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   readonly sessionStore = inject(SessionStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   constructor() {
     effect(() => {
       if (this.sessionStore.session()) {
-        this.router.navigateByUrl('/');
+        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+        void this.router.navigateByUrl(returnUrl || '/');
       }
     });
   }
@@ -73,7 +75,8 @@ export class LoginComponent {
       this.form.getRawValue().password
     );
     if (ok) {
-      await this.router.navigateByUrl('/');
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+      await this.router.navigateByUrl(returnUrl || '/');
     }
   }
 }
