@@ -20,7 +20,12 @@ describe('MembersStore', () => {
     membersService = {
       loadMembersForTenant: vi.fn().mockResolvedValue([]),
       listPendingInvitations: vi.fn().mockResolvedValue([]),
-      createInvitation: vi.fn(),
+      createInvitation: vi.fn().mockResolvedValue({
+        invitation_id: 'inv-1',
+        email: 'new@t.com',
+        expires_at: '2099-01-01',
+        tenant_id: 'tenant-abc',
+      }),
       listRolesForTenant: vi.fn(),
       assignTenantUserRole: vi.fn(),
     };
@@ -42,6 +47,7 @@ describe('MembersStore', () => {
     store.memberItems.set([
       {
         userId: 'u1',
+        email: 'a@b.com',
         fullName: 'A',
         avatarUrl: null,
         memberType: 'member',
@@ -72,6 +78,7 @@ describe('MembersStore', () => {
     membersService.loadMembersForTenant.mockResolvedValue([
       {
         userId: 'u1',
+        email: 'owner@t.com',
         fullName: 'Owner',
         avatarUrl: null,
         memberType: 'owner',

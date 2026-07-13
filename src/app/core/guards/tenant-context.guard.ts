@@ -51,8 +51,11 @@ export const tenantContextGuard: CanActivateFn = async (route, state): Promise<b
     return true;
   }
 
-  // Authenticated but no tenant available (edge case)
+  // No tenant membership: onboarding for regular users, select-tenant for super_admin
   if (ctx && ctx.allowed_tenants.length === 0) {
+    if (!ctx.is_super_admin) {
+      return router.createUrlTree(['/onboarding/create-tenant']);
+    }
     return router.createUrlTree(['/select-tenant']);
   }
 

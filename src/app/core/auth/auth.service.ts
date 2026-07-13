@@ -58,12 +58,15 @@ export class AuthService {
   }
 
   /** Sign up with magic link (OTP). User enters email, clicks link, returns to app authenticated. */
-  async signUpWithMagicLink(email: string): Promise<{ error?: NormalizedError }> {
+  async signUpWithMagicLink(
+    email: string,
+    emailRedirectTo?: string
+  ): Promise<{ error?: NormalizedError }> {
     const { error } = await this.supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`
-      }
+        emailRedirectTo: emailRedirectTo ?? `${window.location.origin}/login`,
+      },
     });
     const normalized = normalizeError(error);
     if (normalized) return { error: normalized };
@@ -71,12 +74,15 @@ export class AuthService {
   }
 
   /** Send magic link to email. User clicks link and returns to app authenticated. */
-  async sendMagicLink(email: string): Promise<{ error?: NormalizedError }> {
+  async sendMagicLink(
+    email: string,
+    emailRedirectTo?: string
+  ): Promise<{ error?: NormalizedError }> {
     const { error } = await this.supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`
-      }
+        emailRedirectTo: emailRedirectTo ?? `${window.location.origin}/login`,
+      },
     });
     const normalized = normalizeError(error);
     if (normalized) return { error: normalized };

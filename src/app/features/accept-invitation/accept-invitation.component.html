@@ -4,6 +4,8 @@
   @if (!token()) {
     <p class="mt-2 text-sm">Missing invitation token in the link.</p>
     <a class="mt-4 inline-block underline" routerLink="/login">Go to login</a>
+  } @else if (redirectingToLogin()) {
+    <p class="mt-2 text-sm">Signing out and redirecting to login…</p>
   } @else if (store.isLoading()) {
     <p class="mt-2 text-sm">Accepting invitation…</p>
   } @else if (store.error()) {

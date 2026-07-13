@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-5xl text-[var(--color-text-primary)]">
+<div class="w-full max-w-5xl text-[var(--color-text-primary)]">
   <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <div>
       <h1 class="text-2xl font-semibold tracking-tight">Members</h1>
@@ -60,13 +60,48 @@
     @if (store.pendingInvitations().length > 0) {
       <section class="mt-8">
         <h2 class="mb-3 text-lg font-semibold">Pending invitations</h2>
-        <ul class="divide-y divide-[var(--color-border-default)] rounded border border-[var(--color-border-default)]">
+        @if (store.pendingInvitationMessage(); as msg) {
+          <p class="mb-3 text-sm text-[var(--color-text-secondary)]" role="status">{{ msg }}</p>
+        }
+        <ul class="surface-panel divide-y divide-[var(--color-border-default)]">
           @for (inv of store.pendingInvitations(); track inv.id) {
-            <li class="flex flex-col gap-1 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-              <span>{{ inv.email }}</span>
-              <span class="text-[var(--color-text-secondary)]">
-                {{ inv.memberType }} · expires {{ inv.expiresAt | date : 'medium' }}
-              </span>
+            <li
+              class="flex flex-col gap-3 px-4 py-3 text-sm transition-colors hover:bg-[var(--color-bg-primary)] sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div class="min-w-0">
+                <span class="font-medium">{{ inv.email }}</span>
+                <span class="mt-0.5 block text-[var(--color-text-secondary)] sm:mt-0 sm:inline sm:before:content-['·_']">
+                  expires {{ inv.expiresAt | date : 'medium' }}
+                </span>
+              </div>
+              @if (store.canInvite()) {
+                <div class="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    [disabled]="!!store.pendingInvitationBusy()[inv.id]"
+                    (click)="resendInvitation(inv.id)"
+                    class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm disabled:opacity-50"
+                  >
+                    @if (store.pendingInvitationBusy()[inv.id] === 'resend') {
+                      Sending…
+                    } @else {
+                      Re-send
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="!!store.pendingInvitationBusy()[inv.id]"
+                    (click)="deleteInvitation(inv.id)"
+                    class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm text-red-600 disabled:opacity-50 dark:text-red-400"
+                  >
+                    @if (store.pendingInvitationBusy()[inv.id] === 'delete') {
+                      Deleting…
+                    } @else {
+                      Delete
+                    }
+                  </button>
+                </div>
+              }
             </li>
           }
         </ul>
@@ -88,19 +123,9 @@
       <h2 id="invite-title" class="text-lg font-semibold">Invite member</h2>
       @if (store.inviteResult(); as r) {
         <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
-          Invitation created. Share this link token (expires {{ r.expiresAt | date : 'medium' }}):
+          Invitation email sent to <strong>{{ r.email }}</strong> (expires
+          {{ r.expiresAt | date : 'medium' }}).
         </p>
-        <pre
-          class="mt-2 max-h-24 overflow-auto rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2 text-xs break-all"
-          >{{ r.token }}</pre
-        >
-        <button
-          type="button"
-          (click)="copyToken()"
-          class="mt-2 text-sm underline"
-        >
-          Copy token
-        </button>
         <div class="mt-4 flex justify-end gap-2">
           <button
             type="button"
@@ -111,6 +136,9 @@
           </button>
         </div>
       } @else {
+        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+          An email with an invitation link will be sent to the address below.
+        </p>
         <label class="mt-3 block text-sm font-medium">Email</label>
         <input
           type="email"
@@ -119,15 +147,6 @@
           (ngModelChange)="store.inviteEmail.set($event)"
           placeholder="colleague@example.com"
         />
-        <label class="mt-3 block text-sm font-medium">Member type</label>
-        <select
-          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
-          [ngModel]="store.inviteMemberType()"
-          (ngModelChange)="store.inviteMemberType.set($event)"
-        >
-          <option value="member">Member</option>
-          <option value="owner">Owner</option>
-        </select>
         @if (store.inviteError(); as ie) {
           <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ ie }}</p>
         }

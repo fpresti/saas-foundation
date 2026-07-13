@@ -17,6 +17,11 @@ const EXPECTED_REMOTE = [
   { version: '20250315000000', name: 'seed_members_permissions' },
   { version: '20250626120000', name: 'security_hardening' },
   { version: '20250626121000', name: 'fix_accept_invitation' },
+  { version: '20250629120000', name: 'seed_default_tenant_roles' },
+  { version: '20250629130000', name: 'invitation_revoke_resend' },
+  { version: '20250713100000', name: 'list_tenant_members' },
+  { version: '20250713110000', name: 'invitations_pending_expired' },
+  { version: '20250713120000', name: 'accept_invitation_email_match' },
 ];
 
 function localMigrations() {

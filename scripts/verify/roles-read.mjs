@@ -14,7 +14,9 @@ async function main() {
     .select('id, code')
     .eq('tenant_id', tenantId);
   if (error) fail(error.message);
-  ok(`roles query returned ${roles?.length ?? 0} rows`);
+  const count = roles?.length ?? 0;
+  if (count < 3) fail(`expected at least 3 default roles, got ${count}`);
+  ok(`roles query returned ${count} rows (admin, member, guest)`);
   console.log('verify:roles-read passed');
 }
 

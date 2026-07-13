@@ -33,10 +33,13 @@ export class MembersStore {
 
   readonly inviteOpen = signal(false);
   readonly inviteEmail = signal('');
-  readonly inviteMemberType = signal<'member' | 'owner'>('member');
   readonly inviteBusy = signal(false);
   readonly inviteError = signal<string | null>(null);
-  readonly inviteResult = signal<{ token: string; expiresAt: string } | null>(null);
+  readonly inviteResult = signal<{ email: string; expiresAt: string } | null>(null);
+
+  /** invitation id → pending action */
+  readonly pendingInvitationBusy = signal<Record<string, 'delete' | 'resend'>>({});
+  readonly pendingInvitationMessage = signal<string | null>(null);
 
   readonly manageOpen = signal(false);
   readonly manageUserId = signal<string | null>(null);
@@ -58,6 +61,8 @@ export class MembersStore {
     this.canManageRoles.set(false);
     this.closeInvite();
     this.closeManage();
+    this.pendingInvitationBusy.set({});
+    this.pendingInvitationMessage.set(null);
   }
 
   async load(tenantId: string): Promise<void> {
@@ -91,7 +96,6 @@ export class MembersStore {
     this.inviteError.set(null);
     this.inviteResult.set(null);
     this.inviteEmail.set('');
-    this.inviteMemberType.set('member');
     this.inviteOpen.set(true);
   }
 
@@ -112,9 +116,8 @@ export class MembersStore {
       const res = await this.membersService.createInvitation({
         tenantId,
         email,
-        memberType: this.inviteMemberType(),
       });
-      this.inviteResult.set({ token: res.token, expiresAt: res.expires_at });
+      this.inviteResult.set({ email: res.email, expiresAt: res.expires_at });
       await this.load(tenantId);
     } catch (e: unknown) {
       const msg =
@@ -124,6 +127,49 @@ export class MembersStore {
       this.inviteError.set(msg);
     } finally {
       this.inviteBusy.set(false);
+    }
+  }
+
+  async revokePendingInvitation(tenantId: string, invitationId: string): Promise<void> {
+    this.pendingInvitationMessage.set(null);
+    this.pendingInvitationBusy.update((m) => ({ ...m, [invitationId]: 'delete' }));
+    try {
+      await this.membersService.revokeInvitation({ tenantId, invitationId });
+      await this.load(tenantId);
+    } catch (e: unknown) {
+      const msg =
+        typeof e === 'object' && e !== null && 'message' in e
+          ? String((e as { message: unknown }).message)
+          : 'Could not delete invitation.';
+      this.pendingInvitationMessage.set(msg);
+    } finally {
+      this.pendingInvitationBusy.update((m) => {
+        const next = { ...m };
+        delete next[invitationId];
+        return next;
+      });
+    }
+  }
+
+  async resendPendingInvitation(tenantId: string, invitationId: string): Promise<void> {
+    this.pendingInvitationMessage.set(null);
+    this.pendingInvitationBusy.update((m) => ({ ...m, [invitationId]: 'resend' }));
+    try {
+      await this.membersService.resendInvitation({ tenantId, invitationId });
+      this.pendingInvitationMessage.set('Invitation email sent again.');
+      await this.load(tenantId);
+    } catch (e: unknown) {
+      const msg =
+        typeof e === 'object' && e !== null && 'message' in e
+          ? String((e as { message: unknown }).message)
+          : 'Could not resend invitation.';
+      this.pendingInvitationMessage.set(msg);
+    } finally {
+      this.pendingInvitationBusy.update((m) => {
+        const next = { ...m };
+        delete next[invitationId];
+        return next;
+      });
     }
   }
 

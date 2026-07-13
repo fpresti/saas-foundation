@@ -37,6 +37,7 @@ export class MembersComponent {
       header: 'Name',
       avatarUrlKey: 'avatarUrl',
     },
+    { key: 'email', header: 'Email' },
     { key: 'memberType', header: 'Member type', hideOnMobile: true },
     { key: 'rolesLabel', header: 'Roles', hideOnMobile: true },
   ];
@@ -90,9 +91,16 @@ export class MembersComponent {
     await this.store.submitInvite(tenantId);
   }
 
-  copyToken(): void {
-    const t = this.store.inviteResult()?.token;
-    if (t) void navigator.clipboard.writeText(t);
+  async resendInvitation(invitationId: string): Promise<void> {
+    const tenantId = this.session.activeTenantId();
+    if (!tenantId) return;
+    await this.store.resendPendingInvitation(tenantId, invitationId);
+  }
+
+  async deleteInvitation(invitationId: string): Promise<void> {
+    const tenantId = this.session.activeTenantId();
+    if (!tenantId) return;
+    await this.store.revokePendingInvitation(tenantId, invitationId);
   }
 
   openManage(row: MemberTableRow): void {

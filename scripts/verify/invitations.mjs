@@ -54,6 +54,14 @@ async function main() {
     .eq('user_id', userId);
   if (!members?.length) fail('invitee not in tenant_members');
 
+  const { data: roleLinks } = await client
+    .from('tenant_member_roles')
+    .select('role_id, roles(code)')
+    .eq('tenant_id', tenantId)
+    .eq('user_id', userId);
+  const codes = (roleLinks ?? []).map((r) => r.roles?.code).filter(Boolean);
+  if (!codes.includes('member')) fail('invitee missing default member role');
+
   ok(`invitation accepted for tenant ${tenantId}`);
   console.log('verify:invitations passed');
 }

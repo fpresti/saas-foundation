@@ -4,6 +4,7 @@
  */
 export interface MemberListItem {
   userId: string;
+  email: string | null;
   fullName: string | null;
   avatarUrl: string | null;
   memberType: 'owner' | 'member';
@@ -16,6 +17,7 @@ export type MemberTableRow = {
   id: string;
   avatarUrl: string | null;
   displayName: string;
+  email: string;
   memberType: string;
   rolesLabel: string;
 } & Record<string, unknown>;
@@ -24,7 +26,8 @@ export function toMemberTableRow(item: MemberListItem): MemberTableRow {
   return {
     id: item.userId,
     avatarUrl: item.avatarUrl,
-    displayName: item.fullName?.trim() || item.userId,
+    displayName: item.fullName?.trim() || item.email || item.userId,
+    email: item.email ?? '—',
     memberType: item.memberType,
     rolesLabel:
       item.roleNames.length > 0 ? item.roleNames.join(', ') : '—',

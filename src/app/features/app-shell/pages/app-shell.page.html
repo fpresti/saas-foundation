@@ -1,16 +1,18 @@
-<div class="flex min-h-screen bg-[var(--color-bg-primary)]">
-  @if (layoutStore.isSidebarExpanded()) {
-    <aside
-      class="hidden w-64 shrink-0 flex-col border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] md:flex"
-      role="navigation"
-      aria-label="Sidebar"
-    >
+<div class="flex h-screen overflow-hidden bg-[var(--color-bg-primary)]">
+  <aside
+    class="shell-sidebar hidden shrink-0 flex-col overflow-hidden border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] md:flex"
+    [class.shell-sidebar--expanded]="layoutStore.isSidebarExpanded()"
+    [class.shell-sidebar--collapsed]="!layoutStore.isSidebarExpanded()"
+    role="navigation"
+    aria-label="Sidebar"
+  >
+    @if (layoutStore.isSidebarExpanded()) {
       <app-sidebar-panel />
-    </aside>
-  } @else {
-    <app-sidebar-rail />
-  }
-  <main class="relative flex flex-1 overflow-auto p-6">
+    } @else {
+      <app-sidebar-rail />
+    }
+  </aside>
+  <main class="relative flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-y-auto p-6">
     <router-outlet />
     <button
       type="button"

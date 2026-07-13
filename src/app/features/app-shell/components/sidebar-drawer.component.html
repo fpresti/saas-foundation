@@ -1,16 +1,18 @@
-@if (layoutStore.isDrawerOpen()) {
-  <div
-    class="fixed inset-0 z-40 bg-black/40 md:hidden"
-    (click)="onBackdropClick()"
-    role="presentation"
+<div
+  class="shell-drawer-backdrop fixed inset-0 z-40 md:hidden"
+  [class.shell-drawer-backdrop--open]="layoutStore.isDrawerOpen()"
+  (click)="onBackdropClick()"
+  role="presentation"
+  [attr.aria-hidden]="!layoutStore.isDrawerOpen()"
+>
+  <aside
+    class="shell-drawer-panel absolute left-0 top-0 flex h-full w-64 max-w-[85vw] flex-col rounded-r border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] shadow-lg"
+    [class.shell-drawer-panel--open]="layoutStore.isDrawerOpen()"
+    (click)="onPanelClick($event)"
+    role="dialog"
+    aria-label="Navigation menu"
+    [attr.aria-hidden]="!layoutStore.isDrawerOpen()"
   >
-    <aside
-      class="absolute left-0 top-0 flex h-full w-64 max-w-[85vw] flex-col rounded-r border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] shadow-lg"
-      (click)="onPanelClick($event)"
-      role="dialog"
-      aria-label="Navigation menu"
-    >
-      <app-sidebar-panel [showCloseButton]="true" class="flex flex-1 flex-col overflow-auto" />
-    </aside>
-  </div>
-}
+    <app-sidebar-panel [showCloseButton]="true" class="flex flex-1 flex-col overflow-auto" />
+  </aside>
+</div>

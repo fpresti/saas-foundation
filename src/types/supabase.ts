@@ -452,6 +452,20 @@ export type Database = {
           token: string
         }[]
       }
+      resend_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: {
+          email: string
+          expires_at: string
+          invitation_id: string
+          tenant_id: string
+          token: string
+        }[]
+      }
+      revoke_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
+      }
       create_tenant_with_owner: {
         Args: {
           p_plan_name?: string
@@ -487,6 +501,16 @@ export type Database = {
       is_super_admin: { Args: never; Returns: boolean }
       is_tenant_member: { Args: { p_tenant_id: string }; Returns: boolean }
       is_tenant_owner: { Args: { p_tenant_id: string }; Returns: boolean }
+      list_tenant_members: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          avatar_url: string | null
+          email: string
+          full_name: string | null
+          member_type: string
+          user_id: string
+        }[]
+      }
       shares_tenant_with_user: { Args: { p_user_id: string }; Returns: boolean }
     }
     Enums: {

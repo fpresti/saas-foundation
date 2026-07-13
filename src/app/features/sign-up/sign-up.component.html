@@ -3,6 +3,12 @@
     <div class="w-full max-w-sm rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6">
       <h1 class="text-2xl font-bold">Create account</h1>
 
+      @if (returnUrl().startsWith('/accept-invitation')) {
+        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+          Create your account to accept the invitation and join the team.
+        </p>
+      }
+
       @if (success()) {
         <p class="mt-4 text-sm" role="status">Check your email to continue.</p>
       }
@@ -34,7 +40,7 @@
       }
 
       <p class="mt-4 text-sm">
-        <a routerLink="/login" class="underline">Back to login</a>
+        <a routerLink="/login" [queryParams]="loginQueryParams()" class="underline">Back to login</a>
       </p>
     </div>
   </div>

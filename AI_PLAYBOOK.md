@@ -110,9 +110,10 @@ Rules:
 - No `tailwind.config.js`.
 - No explicit text color classes in components.
 - Use tokens:
-  - `bg-[var(--color-bg-primary)]`
-  - `bg-[var(--color-bg-secondary)]`
+  - `bg-[var(--color-bg-primary)]` — page / shell background
+  - `bg-[var(--color-bg-secondary)]` — elevated surfaces (white in light theme)
   - `border-[var(--color-border-default)]`
+- **Surface panels:** bordered content on the page background (tables, lists, stat cards) must use the `.surface-panel` class (or equivalent tokens). Do not leave bordered blocks transparent — they inherit `--color-bg-primary` and look flat/wrong next to `app-data-table`.
 - Use `rounded` only.
 - Respect global button/input styles.
 - No inline styles unless strictly required.
@@ -161,24 +162,17 @@ Never expose raw Supabase error objects to UI.
 
 ---
 
-# 5) Roles Model (Current Phase)
+# 5) Roles Model
 
-Platform Role:
-- super_admin
+See **[docs/ROLES.md](./docs/ROLES.md)** for the full model: memberships (`super_admin`, `owner`, `member`), tenant RBAC roles, permission codes per feature, and default seed matrix.
 
-Tenant Roles:
-- owner
-- member
+Summary:
 
-Frontend may:
-- Show/hide UI elements cosmetically.
+- **Platform:** `super_admin` (`super_admins` table)
+- **Membership:** `owner` | `member` (`tenant_members.member_type`)
+- **RBAC:** per-tenant roles in `roles` + `role_permissions` (e.g. `admin`, `member`, `guest`)
 
-Frontend must not:
-- Enforce security
-- Filter data for security
-- Implement permission engines
-
-Future permissions system must be defined before implementation.
+Frontend may show/hide UI cosmetically. Frontend must not enforce security or filter data for authorization.
 
 ---
 

@@ -3,6 +3,16 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { NormalizedError } from '../../core/utils/supabase-error.util';
 import { AuthService } from '../../core/auth/auth.service';
+import {
+  buildMagicLinkRedirectUrl,
+  clearPostAuthRedirect,
+  persistPostAuthRedirect,
+  resolvePostAuthRedirect,
+} from '../../core/auth/post-auth-redirect';
+import {
+  markInvitationAuthReady,
+  parseInvitationTokenFromUrl,
+} from '../../core/auth/invitation-auth';
 import { SessionStore } from '../../core/auth/session.store';
 
 @Component({
@@ -10,7 +20,7 @@ import { SessionStore } from '../../core/auth/session.store';
   standalone: true,
   templateUrl: './login.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink]
+  imports: [ReactiveFormsModule, RouterLink],
 })
 export class LoginComponent {
   private readonly fb = inject(FormBuilder);
@@ -22,61 +32,55 @@ export class LoginComponent {
   constructor() {
     effect(() => {
       if (this.sessionStore.session()) {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-        void this.router.navigateByUrl(returnUrl || '/');
+        void this.navigateAfterAuth();
       }
     });
   }
 
-  readonly mode = signal<'magic' | 'password'>('magic');
+  readonly returnUrl = () =>
+    resolvePostAuthRedirect(this.route.snapshot.queryParamMap.get('returnUrl'));
+
+  readonly signUpQueryParams = (): { returnUrl?: string } => {
+    const url = this.returnUrl();
+    return url === '/' ? {} : { returnUrl: url };
+  };
+
+  readonly isInvitationFlow = () =>
+    this.route.snapshot.queryParamMap.get('fromInvitation') === '1' ||
+    this.returnUrl().startsWith('/accept-invitation');
+
+  private async navigateAfterAuth(): Promise<void> {
+    const destination = this.returnUrl();
+    const inviteToken = parseInvitationTokenFromUrl(destination);
+    if (inviteToken) {
+      markInvitationAuthReady(inviteToken);
+    }
+    clearPostAuthRedirect();
+    await this.router.navigateByUrl(destination);
+  }
+
   readonly magicSuccess = signal(false);
   readonly magicError = signal<NormalizedError | null>(null);
 
   readonly magicForm = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]]
-  });
-
-  readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
   });
-
-  get email() {
-    return this.form.controls.email;
-  }
-
-  get password() {
-    return this.form.controls.password;
-  }
-
-  setMode(m: 'magic' | 'password'): void {
-    this.mode.set(m);
-    this.magicSuccess.set(false);
-    this.magicError.set(null);
-  }
 
   async sendMagicLink(): Promise<void> {
     if (this.magicForm.invalid) return;
     this.magicError.set(null);
     this.magicSuccess.set(false);
     const email = this.magicForm.getRawValue().email;
-    const result = await this.authService.sendMagicLink(email);
+    const destination = this.returnUrl();
+    persistPostAuthRedirect(destination);
+    const result = await this.authService.sendMagicLink(
+      email,
+      buildMagicLinkRedirectUrl(this.route.snapshot.queryParamMap.get('returnUrl'))
+    );
     if (result.error) {
       this.magicError.set(result.error);
       return;
     }
     this.magicSuccess.set(true);
-  }
-
-  async signInWithPassword(): Promise<void> {
-    if (this.form.invalid) return;
-    const ok = await this.sessionStore.signIn(
-      this.form.getRawValue().email,
-      this.form.getRawValue().password
-    );
-    if (ok) {
-      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-      await this.router.navigateByUrl(returnUrl || '/');
-    }
   }
 }

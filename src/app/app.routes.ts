@@ -32,6 +32,14 @@ export const routes: Routes = [
       import('./features/accept-invitation/routes').then(m => m.acceptInvitationRoutes)
   },
   {
+    path: 'onboarding/create-tenant',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/onboarding-create-tenant/routes').then(
+        (m) => m.onboardingCreateTenantRoutes
+      ),
+  },
+  {
     path: '',
     canActivate: [authGuard, tenantContextGuard],
     component: AppShellPageComponent,
@@ -40,11 +48,6 @@ export const routes: Routes = [
         path: 'select-tenant',
         loadChildren: () =>
           import('./features/tenant-select/routes').then(m => m.tenantSelectRoutes)
-      },
-      {
-        path: 'onboarding/create-tenant',
-        loadChildren: () =>
-          import('./features/onboarding-create-tenant/routes').then(m => m.onboardingCreateTenantRoutes)
       },
       {
         path: '',
