@@ -1,6 +1,7 @@
 import {
   buildAcceptInvitationUrl,
   buildLoginCallbackUrl,
+  buildMagicLinkRedirectUrl,
   clearPostAuthRedirect,
   isSafeInternalRedirect,
   persistPostAuthRedirect,
@@ -34,9 +35,16 @@ describe('post-auth-redirect', () => {
     expect(resolvePostAuthRedirect(null)).toBe('/');
   });
 
-  it('buildLoginCallbackUrl encodes nested query', () => {
-    const url = buildLoginCallbackUrl('/accept-invitation?token=abc');
-    expect(url).toBe('/login?returnUrl=%2Faccept-invitation%3Ftoken%3Dabc');
+  it('buildMagicLinkRedirectUrl uses accept-invitation for invite target', () => {
+    persistPostAuthRedirect('/accept-invitation?token=abc');
+    expect(buildMagicLinkRedirectUrl(null)).toBe(
+      `${window.location.origin}/accept-invitation?token=abc`
+    );
+  });
+
+  it('buildMagicLinkRedirectUrl uses login for home', () => {
+    clearPostAuthRedirect();
+    expect(buildMagicLinkRedirectUrl(null)).toBe(`${window.location.origin}/login`);
   });
 
   it('persistPostAuthRedirect ignores unsafe urls', () => {

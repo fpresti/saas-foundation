@@ -48,6 +48,9 @@ export class SessionStore {
 
   readonly isAuthenticated = this.authStore.isAuthenticated;
 
+  /** True while Supabase auth session is being resolved (incl. magic-link callback). */
+  readonly authLoading = this.authStore.isLoading;
+
   readonly isSuperAdmin = computed(
     () => this.accessContextStore.context()?.is_super_admin ?? false
   );
@@ -105,6 +108,15 @@ export class SessionStore {
       accessContextStatus: this.accessContextStore.status(),
       loading: this.loading(),
     });
+  }
+
+  /** Wait until Supabase auth init finishes (safe to call multiple times). */
+  async waitForAuthSettled(): Promise<void> {
+    await this.authStore.initialize();
+    const deadline = Date.now() + 10_000;
+    while (this.authStore.isLoading() && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 50));
+    }
   }
 
   /** Reload access context from RPC for the current active tenant id. */

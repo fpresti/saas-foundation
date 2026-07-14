@@ -1,4 +1,11 @@
-import { Component, ChangeDetectionStrategy, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  OnInit,
+  signal,
+} from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import type { NormalizedError } from '../../core/utils/supabase-error.util';
@@ -22,19 +29,41 @@ import { SessionStore } from '../../core/auth/session.store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   readonly sessionStore = inject(SessionStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
+  private navigatedAfterAuth = false;
+
   constructor() {
     effect(() => {
-      if (this.sessionStore.session()) {
+      const session = this.sessionStore.session();
+      const authLoading = this.sessionStore.authLoading();
+      if (!authLoading && session && !this.navigatedAfterAuth) {
+        this.navigatedAfterAuth = true;
         void this.navigateAfterAuth();
       }
     });
+  }
+
+  async ngOnInit(): Promise<void> {
+    await this.sessionStore.waitForAuthSettled();
+    await this.tryRedirectIfAuthenticated();
+  }
+
+  private async tryRedirectIfAuthenticated(): Promise<void> {
+    if (this.navigatedAfterAuth || !this.sessionStore.isAuthenticated()) {
+      return;
+    }
+    const destination = this.returnUrl();
+    if (destination === '/' && !this.isInvitationFlow()) {
+      return;
+    }
+    this.navigatedAfterAuth = true;
+    await this.navigateAfterAuth();
   }
 
   readonly returnUrl = () =>
@@ -58,13 +87,20 @@ export class LoginComponent {
     clearPostAuthRedirect();
     await this.router.navigateByUrl(destination);
   }
-
   readonly magicSuccess = signal(false);
   readonly magicError = signal<NormalizedError | null>(null);
+  readonly step = signal<'email' | 'sent'>('email');
+  readonly sentEmail = signal('');
 
   readonly magicForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
   });
+
+  resetToEmailStep(): void {
+    this.step.set('email');
+    this.magicSuccess.set(false);
+    this.magicError.set(null);
+  }
 
   async sendMagicLink(): Promise<void> {
     if (this.magicForm.invalid) return;
@@ -81,6 +117,8 @@ export class LoginComponent {
       this.magicError.set(result.error);
       return;
     }
+    this.sentEmail.set(email);
     this.magicSuccess.set(true);
+    this.step.set('sent');
   }
 }

@@ -13,6 +13,11 @@ export class AuthService {
   private readonly supabase = inject(SupabaseService).client;
 
   /** Get current session. Call once at bootstrap. */
+  async initializeAuth(): Promise<void> {
+    await this.supabase.auth.initialize();
+  }
+
+  /** Get current session. Call after {@link initializeAuth} at bootstrap. */
   async getSession(): Promise<Session | null> {
     const { data, error } = await this.supabase.auth.getSession();
     if (error) {

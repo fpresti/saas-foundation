@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   inject,
   OnInit,
   signal,
@@ -12,11 +13,7 @@ import {
   clearPostAuthRedirect,
   persistPostAuthRedirect,
 } from '../../core/auth/post-auth-redirect';
-import {
-  clearInvitationAuthReady,
-  isInvitationAuthReady,
-  markInvitationAuthReady,
-} from '../../core/auth/invitation-auth';
+import { clearInvitationAuthReady } from '../../core/auth/invitation-auth';
 import { AcceptInvitationStore } from './accept-invitation.store';
 
 @Component({
@@ -35,15 +32,22 @@ export class AcceptInvitationComponent implements OnInit {
   readonly token = signal('');
   readonly redirectingToLogin = signal(false);
 
-  ngOnInit(): void {
+  readonly isEmailMismatch = computed(() => {
+    const msg = this.store.error()?.message?.toLowerCase() ?? '';
+    return msg.includes('email') && msg.includes('match');
+  });
+
+  async ngOnInit(): Promise<void> {
     const t = this.route.snapshot.queryParamMap.get('token') ?? '';
     this.token.set(t);
-    void this.tryAccept();
+    await this.session.waitForAuthSettled();
+    await this.tryAccept();
   }
 
   private async redirectToLogin(token: string): Promise<void> {
     const returnUrl = buildAcceptInvitationUrl(token);
     persistPostAuthRedirect(returnUrl);
+    clearInvitationAuthReady(token);
     this.redirectingToLogin.set(true);
     await this.router.navigate(['/login'], {
       queryParams: { returnUrl, fromInvitation: '1' },
@@ -59,13 +63,6 @@ export class AcceptInvitationComponent implements OnInit {
       return;
     }
 
-    if (!isInvitationAuthReady(token)) {
-      await this.session.signOut();
-      markInvitationAuthReady(token);
-      await this.redirectToLogin(token);
-      return;
-    }
-
     const ok = await this.store.accept(token);
     if (ok) {
       clearInvitationAuthReady(token);
@@ -77,5 +74,13 @@ export class AcceptInvitationComponent implements OnInit {
 
   async retry(): Promise<void> {
     await this.tryAccept();
+  }
+
+  async signOutAndContinue(): Promise<void> {
+    const token = this.token().trim();
+    if (!token) return;
+    this.store.reset();
+    await this.session.signOut();
+    await this.redirectToLogin(token);
   }
 }

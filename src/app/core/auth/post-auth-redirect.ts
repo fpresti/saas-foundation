@@ -30,11 +30,22 @@ export function clearPostAuthRedirect(): void {
 }
 
 /** Supabase magic-link callback; preserves returnUrl through email round-trip. */
-export function buildLoginCallbackUrl(returnUrl: string): string {
-  return `/login?returnUrl=${encodeURIComponent(returnUrl)}`;
+export function buildLoginCallbackUrl(returnUrl: string, fromInvitation = false): string {
+  const params = new URLSearchParams({ returnUrl });
+  if (fromInvitation) {
+    params.set('fromInvitation', '1');
+  }
+  return `/login?${params.toString()}`;
 }
 
-export function buildMagicLinkRedirectUrl(returnUrl: string): string {
+export function buildMagicLinkRedirectUrl(returnUrl: string | null): string {
   const target = resolvePostAuthRedirect(returnUrl);
+  // Invitation: magic link lands on accept-invitation (PKCE + accept in one step).
+  if (target.startsWith('/accept-invitation')) {
+    return `${window.location.origin}${target}`;
+  }
+  if (target === '/') {
+    return `${window.location.origin}/login`;
+  }
   return `${window.location.origin}${buildLoginCallbackUrl(target)}`;
 }

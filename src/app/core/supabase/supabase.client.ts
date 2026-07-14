@@ -12,7 +12,13 @@ export function createSupabaseBrowserClient(
   supabaseUrl: string,
   supabaseAnonKey: string
 ): SupabaseClient<Database> {
-  return createClient<Database>(supabaseUrl, supabaseAnonKey);
+  return createClient<Database>(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: 'pkce',
+      detectSessionInUrl: true,
+      persistSession: true,
+    },
+  });
 }
 
 /**

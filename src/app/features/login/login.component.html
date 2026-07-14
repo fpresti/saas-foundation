@@ -1,51 +1,122 @@
 <section class="min-h-screen bg-[var(--color-bg-primary)]">
   <div class="flex min-h-screen items-center justify-center p-4">
-    <div class="w-full max-w-sm rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6">
-      <h1 class="text-2xl font-bold">Login</h1>
+    <div class="w-full max-w-md rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6">
+      @if (step() === 'email') {
+        <h1 class="text-2xl font-bold">Login</h1>
 
-      @if (isInvitationFlow()) {
-        <p class="mt-3 rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-3 text-sm text-[var(--color-text-secondary)]">
-          Bienvenido. Si es tu primera vez, usa tu email para recibir un enlace de acceso y unirte al
-          equipo. No se creará un workspace nuevo.
-        </p>
-      } @else {
-        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
-          Enter your email and we will send you a sign-in link.
-        </p>
-      }
-
-      <form class="mt-4 space-y-4" [formGroup]="magicForm" (ngSubmit)="sendMagicLink()">
-        <div>
-          <label for="login-magic-email" class="block text-sm">Email</label>
-          <input
-            id="login-magic-email"
-            type="email"
-            formControlName="email"
-            autocomplete="email"
-            class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
-          />
-        </div>
-        @if (magicSuccess()) {
-          <p class="text-sm" role="status">
-            Revisa tu email y abre el enlace para continuar.
+        @if (isInvitationFlow()) {
+          <p
+            class="mt-3 rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-3 text-sm text-[var(--color-text-secondary)]"
+          >
+            Bienvenido. Si es tu primera vez, usa tu email para recibir un enlace de acceso y unirte al
+            equipo. No se creará un workspace nuevo.
+          </p>
+        } @else {
+          <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+            Introduce tu email y te enviaremos un enlace para acceder.
           </p>
         }
-        @if (magicError(); as err) {
-          <p class="text-sm" role="alert">{{ err.message }}</p>
-        }
-        <button
-          type="submit"
-          [disabled]="magicForm.invalid"
-          class="w-full rounded bg-[var(--color-primary-500)] px-3 py-2 text-[var(--color-text-on-primary)] hover:bg-[var(--color-primary-700)] disabled:opacity-50"
-        >
-          Enviar enlace de acceso
-        </button>
-      </form>
 
-      @if (!isInvitationFlow()) {
-        <p class="mt-4 text-sm">
-          <a routerLink="/sign-up" [queryParams]="signUpQueryParams()" class="underline">Create account</a>
-        </p>
+        <form class="mt-4 space-y-4" [formGroup]="magicForm" (ngSubmit)="sendMagicLink()">
+          <div>
+            <label for="login-magic-email" class="block text-sm">Email</label>
+            <input
+              id="login-magic-email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
+            />
+          </div>
+          @if (magicError(); as err) {
+            <p class="text-sm text-red-600 dark:text-red-400" role="alert">{{ err.message }}</p>
+          }
+          <button
+            type="submit"
+            [disabled]="magicForm.invalid"
+            class="w-full rounded bg-[var(--color-primary-500)] px-3 py-2 text-[var(--color-text-on-primary)] hover:bg-[var(--color-primary-700)] disabled:opacity-50"
+          >
+            Enviar enlace de acceso
+          </button>
+        </form>
+
+        @if (!isInvitationFlow()) {
+          <p class="mt-4 text-sm">
+            <a routerLink="/sign-up" [queryParams]="signUpQueryParams()" class="underline">Create account</a>
+          </p>
+        }
+      } @else {
+        <div role="status" aria-live="polite">
+          <h1 class="text-2xl font-bold">Revisa tu email</h1>
+          <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+            Hemos enviado un enlace de acceso a
+            <strong class="text-[var(--color-text-primary)]">{{ sentEmail() }}</strong
+            >.
+          </p>
+
+          <ol class="mt-6 space-y-4">
+            <li class="flex gap-3">
+              <span
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] text-xs font-semibold"
+                aria-hidden="true"
+                >1</span
+              >
+              <div class="text-sm">
+                <p class="font-medium">Abre tu bandeja de entrada</p>
+                <p class="mt-0.5 text-[var(--color-text-secondary)]">
+                  Busca un email nuestro. Si no lo ves, revisa spam o promociones.
+                </p>
+              </div>
+            </li>
+            <li class="flex gap-3">
+              <span
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] text-xs font-semibold"
+                aria-hidden="true"
+                >2</span
+              >
+              <div class="text-sm">
+                <p class="font-medium">Pulsa el enlace del email</p>
+                <p class="mt-0.5 text-[var(--color-text-secondary)]">
+                  @if (isInvitationFlow()) {
+                    Volverás aquí, aceptarás la invitación y entrarás al equipo.
+                  } @else {
+                    Volverás aquí ya autenticado y podrás continuar.
+                  }
+                </p>
+              </div>
+            </li>
+            <li class="flex gap-3">
+              <span
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] text-xs font-semibold"
+                aria-hidden="true"
+                >3</span
+              >
+              <div class="text-sm">
+                <p class="font-medium">Mantén esta ventana abierta</p>
+                <p class="mt-0.5 text-[var(--color-text-secondary)]">
+                  Te redirigiremos automáticamente en cuanto completes el acceso.
+                </p>
+              </div>
+            </li>
+          </ol>
+
+          <div class="mt-6 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              (click)="sendMagicLink()"
+              class="flex-1 rounded border border-[var(--color-border-default)] px-3 py-2 text-sm"
+            >
+              Reenviar enlace
+            </button>
+            <button
+              type="button"
+              (click)="resetToEmailStep()"
+              class="flex-1 rounded border border-[var(--color-border-default)] px-3 py-2 text-sm"
+            >
+              Usar otro email
+            </button>
+          </div>
+        </div>
       }
     </div>
   </div>

@@ -14,6 +14,7 @@ export class AuthStore {
   private readonly accessContextStore = inject(AccessContextStore);
 
   private unsubscribeAuthChanges: (() => void) | null = null;
+  private initPromise: Promise<void> | null = null;
 
   readonly session = signal<Session | null>(null);
   readonly isLoading = signal<boolean>(true);
@@ -22,11 +23,19 @@ export class AuthStore {
   readonly isAuthenticated = computed(() => this.session() !== null);
 
   async initialize(): Promise<void> {
-    // prevent double init (HMR / accidental re-call)
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+    this.initPromise = this.runInitialize();
+    return this.initPromise;
+  }
+
+  private async runInitialize(): Promise<void> {
     if (this.unsubscribeAuthChanges) return;
 
     this.isLoading.set(true);
     try {
+      await this.authService.initializeAuth();
       const session = await this.authService.getSession();
       this.session.set(session);
       logBootstrap('AuthStore.initialize getSession', {
