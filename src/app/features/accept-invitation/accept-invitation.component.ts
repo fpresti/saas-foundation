@@ -14,6 +14,8 @@ import {
   persistPostAuthRedirect,
 } from '../../core/auth/post-auth-redirect';
 import { clearInvitationAuthReady } from '../../core/auth/invitation-auth';
+import { ProfileService } from '../../core/profile/profile.service';
+import { needsMemberProfileOnboarding } from '../../core/profile/member-profile-onboarding.util';
 import { AcceptInvitationStore } from './accept-invitation.store';
 
 @Component({
@@ -28,6 +30,7 @@ export class AcceptInvitationComponent implements OnInit {
   private readonly router = inject(Router);
   readonly session = inject(SessionStore);
   readonly store = inject(AcceptInvitationStore);
+  private readonly profileService = inject(ProfileService);
 
   readonly token = signal('');
   readonly redirectingToLogin = signal(false);
@@ -68,7 +71,15 @@ export class AcceptInvitationComponent implements OnInit {
       clearInvitationAuthReady(token);
       clearPostAuthRedirect();
       await this.session.loadAccessContext(this.store.successTenantId());
-      await this.router.navigateByUrl('/');
+      try {
+        const profile = await this.profileService.getOwnProfile();
+        const destination = needsMemberProfileOnboarding(profile?.fullName)
+          ? '/onboarding/complete-profile'
+          : '/';
+        await this.router.navigateByUrl(destination);
+      } catch {
+        await this.router.navigateByUrl('/onboarding/complete-profile');
+      }
     }
   }
 

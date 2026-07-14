@@ -1,0 +1,82 @@
+<section class="min-h-screen bg-[var(--color-bg-primary)]">
+  <div class="flex min-h-screen items-center justify-center p-4">
+    <div class="w-full max-w-md rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6">
+      @if (step() === 'welcome') {
+        <h1 class="text-2xl font-bold">Bienvenido al equipo</h1>
+        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+          Te unes a
+          <strong class="text-[var(--color-text-primary)]">{{ tenantName() }}</strong
+          >. Completa tu perfil para acceder a la aplicación.
+        </p>
+
+        <dl class="surface-panel mt-4 space-y-3 p-4 text-sm">
+          <div>
+            <dt class="text-xs text-[var(--color-text-secondary)]">Organización</dt>
+            <dd class="mt-0.5 font-medium">{{ tenantName() }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-[var(--color-text-secondary)]">Tu email</dt>
+            <dd class="mt-0.5 font-medium">{{ email() }}</dd>
+          </div>
+        </dl>
+
+        <button
+          type="button"
+          (click)="continueToProfile()"
+          class="mt-6 w-full rounded bg-[var(--color-primary-500)] px-3 py-2 text-[var(--color-text-on-primary)] hover:bg-[var(--color-primary-700)]"
+        >
+          Continuar
+        </button>
+      } @else {
+        <h1 class="text-2xl font-bold">Tu perfil</h1>
+        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+          Indica cómo quieres que te vean los demás miembros de
+          {{ tenantName() }}.
+        </p>
+
+        <form class="mt-4 space-y-4" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div>
+            <label for="profile-full-name" class="block text-sm">Nombre completo</label>
+            <input
+              id="profile-full-name"
+              type="text"
+              formControlName="fullName"
+              autocomplete="name"
+              class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
+            />
+            @if (form.controls.fullName.invalid && form.controls.fullName.touched) {
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                Escribe al menos 2 caracteres.
+              </p>
+            }
+          </div>
+
+          @if (error(); as err) {
+            <p class="text-sm text-red-600 dark:text-red-400" role="alert">{{ err.message }}</p>
+          }
+
+          <div class="flex gap-2">
+            <button
+              type="button"
+              (click)="step.set('welcome')"
+              class="flex-1 rounded border border-[var(--color-border-default)] px-3 py-2 text-sm"
+            >
+              Atrás
+            </button>
+            <button
+              type="submit"
+              [disabled]="form.invalid || loading()"
+              class="flex-1 rounded bg-[var(--color-primary-500)] px-3 py-2 text-[var(--color-text-on-primary)] hover:bg-[var(--color-primary-700)] disabled:opacity-50"
+            >
+              @if (loading()) {
+                Guardando…
+              } @else {
+                Entrar a la app
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+</section>

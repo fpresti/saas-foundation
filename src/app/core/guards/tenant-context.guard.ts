@@ -11,7 +11,8 @@ function isTenantSelectionOrOnboardingPath(url: string): boolean {
   return (
     path === '/select-tenant' ||
     path.startsWith('/select-tenant/') ||
-    path.startsWith('/onboarding/create-tenant')
+    path.startsWith('/onboarding/create-tenant') ||
+    path.startsWith('/onboarding/complete-profile')
   );
 }
 

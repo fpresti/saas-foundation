@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { permissionGuard } from './core/auth/permission.guard';
 import { authGuard } from './core/guards/auth.guard';
+import { memberProfileOnboardingGuard } from './core/guards/member-profile-onboarding.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
 import { AppShellPageComponent } from './features/app-shell';
@@ -40,8 +41,15 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'onboarding/complete-profile',
+    loadChildren: () =>
+      import('./features/onboarding-complete-profile/routes').then(
+        (m) => m.onboardingCompleteProfileRoutes
+      ),
+  },
+  {
     path: '',
-    canActivate: [authGuard, tenantContextGuard],
+    canActivate: [authGuard, tenantContextGuard, memberProfileOnboardingGuard],
     component: AppShellPageComponent,
     children: [
       {
