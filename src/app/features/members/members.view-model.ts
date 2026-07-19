@@ -5,7 +5,8 @@
 export interface MemberListItem {
   userId: string;
   email: string | null;
-  fullName: string | null;
+  givenName: string | null;
+  familyName: string | null;
   avatarUrl: string | null;
   memberType: 'owner' | 'member';
   roleNames: string[];
@@ -22,14 +23,21 @@ export type MemberTableRow = {
   rolesLabel: string;
 } & Record<string, unknown>;
 
+export function memberDisplayName(item: MemberListItem): string {
+  const name = [item.givenName, item.familyName]
+    .map((part) => part?.trim() ?? '')
+    .filter(Boolean)
+    .join(' ');
+  return name || item.email || item.userId;
+}
+
 export function toMemberTableRow(item: MemberListItem): MemberTableRow {
   return {
     id: item.userId,
     avatarUrl: item.avatarUrl,
-    displayName: item.fullName?.trim() || item.email || item.userId,
+    displayName: memberDisplayName(item),
     email: item.email ?? '—',
     memberType: item.memberType,
-    rolesLabel:
-      item.roleNames.length > 0 ? item.roleNames.join(', ') : '—',
+    rolesLabel: item.roleNames.length > 0 ? item.roleNames.join(', ') : '—',
   } as MemberTableRow;
 }

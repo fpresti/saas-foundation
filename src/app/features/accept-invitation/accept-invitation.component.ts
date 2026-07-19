@@ -73,7 +73,10 @@ export class AcceptInvitationComponent implements OnInit {
       await this.session.loadAccessContext(this.store.successTenantId());
       try {
         const profile = await this.profileService.getOwnProfile();
-        const destination = needsMemberProfileOnboarding(profile?.fullName)
+        const destination = needsMemberProfileOnboarding(
+          profile?.givenName,
+          profile?.familyName
+        )
           ? '/onboarding/complete-profile'
           : '/';
         await this.router.navigateByUrl(destination);

@@ -1,5 +1,6 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { AccessContextStore } from '../../features/access-context';
+import { CurrentProfileStore } from '../profile/current-profile.store';
 import { logBootstrap } from './bootstrap-debug.log';
 import { AuthStore } from './auth.store';
 
@@ -19,6 +20,7 @@ import { AuthStore } from './auth.store';
 export class SessionStore {
   private readonly authStore = inject(AuthStore);
   private readonly accessContextStore = inject(AccessContextStore);
+  private readonly currentProfileStore = inject(CurrentProfileStore);
 
   /** Supabase session (owned by AuthStore). */
   readonly session = this.authStore.session;
@@ -70,6 +72,7 @@ export class SessionStore {
   /** Same as AuthStore.signOut (awaitable for shell logout + navigate). */
   async signOut(): Promise<void> {
     await this.authStore.signOut();
+    this.currentProfileStore.reset();
   }
 
   /** Password sign-in; loads access context on success (delegates to AuthStore). */

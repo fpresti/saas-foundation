@@ -124,7 +124,8 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           default_tenant_id: string | null
-          full_name: string | null
+          family_name: string | null
+          given_name: string | null
           last_tenant_id: string | null
           updated_at: string
           user_id: string
@@ -134,7 +135,8 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           default_tenant_id?: string | null
-          full_name?: string | null
+          family_name?: string | null
+          given_name?: string | null
           last_tenant_id?: string | null
           updated_at?: string
           user_id: string
@@ -144,7 +146,8 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           default_tenant_id?: string | null
-          full_name?: string | null
+          family_name?: string | null
+          given_name?: string | null
           last_tenant_id?: string | null
           updated_at?: string
           user_id?: string
@@ -506,7 +509,8 @@ export type Database = {
         Returns: {
           avatar_url: string | null
           email: string
-          full_name: string | null
+          family_name: string | null
+          given_name: string | null
           member_type: string
           user_id: string
         }[]

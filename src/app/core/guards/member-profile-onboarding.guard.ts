@@ -22,7 +22,9 @@ export const memberProfileOnboardingGuard: CanActivateFn = async (): Promise<boo
 
   try {
     const profile = await profileService.getOwnProfile();
-    if (shouldForceMemberProfileOnboarding(tenantRole, profile?.fullName)) {
+    if (
+      shouldForceMemberProfileOnboarding(tenantRole, profile?.givenName, profile?.familyName)
+    ) {
       return router.createUrlTree(['/onboarding/complete-profile']);
     }
   } catch {
@@ -47,7 +49,7 @@ export const completeProfileOnboardingGuard: CanActivateFn = async (): Promise<b
 
   try {
     const profile = await profileService.getOwnProfile();
-    if (!needsMemberProfileOnboarding(profile?.fullName)) {
+    if (!needsMemberProfileOnboarding(profile?.givenName, profile?.familyName)) {
       return router.createUrlTree(['/']);
     }
   } catch {

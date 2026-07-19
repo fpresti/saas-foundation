@@ -48,7 +48,8 @@ describe('MembersStore', () => {
       {
         userId: 'u1',
         email: 'a@b.com',
-        fullName: 'A',
+        givenName: 'A',
+        familyName: null,
         avatarUrl: null,
         memberType: 'member',
         roleNames: [],
@@ -79,7 +80,8 @@ describe('MembersStore', () => {
       {
         userId: 'u1',
         email: 'owner@t.com',
-        fullName: 'Owner',
+        givenName: 'Owner',
+        familyName: null,
         avatarUrl: null,
         memberType: 'owner',
         roleNames: ['Admin'],

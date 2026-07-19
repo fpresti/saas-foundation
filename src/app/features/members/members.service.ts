@@ -87,7 +87,8 @@ export class MembersService {
       result.push({
         userId: m.user_id,
         email: m.email ?? null,
-        fullName: m.full_name ?? null,
+        givenName: m.given_name ?? null,
+        familyName: m.family_name ?? null,
         avatarUrl: m.avatar_url ?? null,
         memberType,
         roleNames: [...roles.names],
@@ -95,11 +96,11 @@ export class MembersService {
       });
     }
 
-    result.sort((a, b) =>
-      (a.fullName || a.email || a.userId).localeCompare(
-        b.fullName || b.email || b.userId
-      )
-    );
+    result.sort((a, b) => {
+      const left = [a.givenName, a.familyName].filter(Boolean).join(' ') || a.email || a.userId;
+      const right = [b.givenName, b.familyName].filter(Boolean).join(' ') || b.email || b.userId;
+      return left.localeCompare(right);
+    });
     return result;
   }
 

@@ -35,16 +35,75 @@
         </p>
 
         <form class="mt-4 space-y-4" [formGroup]="form" (ngSubmit)="onSubmit()">
+          <div class="flex items-center gap-4">
+            <div
+              class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] text-sm text-[var(--color-text-secondary)]"
+            >
+              @if (avatarPreviewUrl(); as preview) {
+                <img [src]="preview" alt="" class="h-full w-full object-cover" />
+              } @else {
+                Foto
+              }
+            </div>
+            <div class="min-w-0 flex-1">
+              <label for="profile-avatar" class="block text-sm">Foto de perfil</label>
+              <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+                Opcional. JPEG, PNG o WebP · se reduce automáticamente (máx. 1 MB)
+              </p>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <label
+                  for="profile-avatar"
+                  class="cursor-pointer rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm hover:bg-[var(--color-bg-primary)]"
+                >
+                  Elegir imagen
+                </label>
+                <input
+                  #avatarInput
+                  id="profile-avatar"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  class="sr-only"
+                  (change)="onAvatarSelected($event)"
+                />
+                @if (avatarFile()) {
+                  <button
+                    type="button"
+                    class="rounded px-2 py-1.5 text-sm text-[var(--color-text-secondary)] underline"
+                    (click)="clearAvatar(avatarInput)"
+                  >
+                    Quitar
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
           <div>
-            <label for="profile-full-name" class="block text-sm">Nombre completo</label>
+            <label for="profile-given-name" class="block text-sm">Nombre</label>
             <input
-              id="profile-full-name"
+              id="profile-given-name"
               type="text"
-              formControlName="fullName"
-              autocomplete="name"
+              formControlName="givenName"
+              autocomplete="given-name"
               class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
             />
-            @if (form.controls.fullName.invalid && form.controls.fullName.touched) {
+            @if (form.controls.givenName.invalid && form.controls.givenName.touched) {
+              <p class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
+                Escribe al menos 2 caracteres.
+              </p>
+            }
+          </div>
+
+          <div>
+            <label for="profile-family-name" class="block text-sm">Apellidos</label>
+            <input
+              id="profile-family-name"
+              type="text"
+              formControlName="familyName"
+              autocomplete="family-name"
+              class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2"
+            />
+            @if (form.controls.familyName.invalid && form.controls.familyName.touched) {
               <p class="mt-1 text-sm text-red-600 dark:text-red-400" role="alert">
                 Escribe al menos 2 caracteres.
               </p>

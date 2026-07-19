@@ -22,6 +22,9 @@ const EXPECTED_REMOTE = [
   { version: '20250713100000', name: 'list_tenant_members' },
   { version: '20250713110000', name: 'invitations_pending_expired' },
   { version: '20250713120000', name: 'accept_invitation_email_match' },
+  { version: '20260719125120', name: 'avatars_bucket_policies' },
+  { version: '20260719125158', name: 'profiles_given_family_name' },
+  { version: '20260719125538', name: 'avatars_select_own_only' },
 ];
 
 function localMigrations() {
