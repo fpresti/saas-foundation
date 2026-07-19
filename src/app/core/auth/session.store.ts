@@ -82,9 +82,10 @@ export class SessionStore {
 
   /**
    * Load access context from RPC. Omit tenantId for default/server context (e.g. after onboarding).
+   * Signs out if the user is membership-deactivated.
    */
   async loadAccessContext(tenantId?: string | null): Promise<void> {
-    await this.accessContextStore.load(tenantId);
+    await this.authStore.loadAccessContextRejectingDeactivated(tenantId);
   }
 
   /**
@@ -100,7 +101,7 @@ export class SessionStore {
     });
     if (authed) {
       try {
-        await this.accessContextStore.load();
+        await this.authStore.loadAccessContextRejectingDeactivated();
       } catch {
         logBootstrap('SessionStore.initialize load() failed (status should be error)');
       }
@@ -130,7 +131,7 @@ export class SessionStore {
   /** Load access context once if not already ready (for guards after bootstrap). */
   async ensureAccessContextReady(): Promise<void> {
     if (this.accessContextStore.status() !== 'ready') {
-      await this.accessContextStore.load();
+      await this.authStore.loadAccessContextRejectingDeactivated();
     }
   }
 

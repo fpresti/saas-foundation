@@ -14,13 +14,14 @@ import {
   type DataTableColumn,
   type DataTableAction,
 } from '../../shared/components/data-table';
+import { UserAvatarComponent } from '../app-shell/components/user-avatar.component';
 import { type MemberTableRow } from './members.view-model';
 import { MembersStore } from './members.store';
 
 @Component({
   selector: 'app-members',
   standalone: true,
-  imports: [DataTableComponent, FormsModule, DatePipe],
+  imports: [DataTableComponent, FormsModule, DatePipe, UserAvatarComponent],
   templateUrl: './members.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -33,12 +34,14 @@ export class MembersComponent {
 
   readonly columns: DataTableColumn<MemberTableRow>[] = [
     {
-      key: 'displayName',
-      header: 'Name',
+      key: 'givenName',
+      header: 'Nombre',
       avatarUrlKey: 'avatarUrl',
     },
+    { key: 'familyName', header: 'Apellidos' },
     { key: 'email', header: 'Email' },
     { key: 'memberType', header: 'Member type', hideOnMobile: true },
+    { key: 'statusLabel', header: 'Status', hideOnMobile: true },
     { key: 'rolesLabel', header: 'Roles', hideOnMobile: true },
   ];
 
@@ -47,7 +50,7 @@ export class MembersComponent {
       id: 'manage',
       label: 'Manage',
       kind: 'neutral',
-      disabled: () => !this.store.canManageRoles(),
+      disabled: () => !this.store.canManageMembers() && !this.store.canManageRoles(),
       onClick: (row) => this.openManage(row),
     },
   ];
@@ -113,9 +116,19 @@ export class MembersComponent {
     this.store.closeManage();
   }
 
-  async submitAssignRole(): Promise<void> {
+  onManageAvatarSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.store.onManageAvatarSelected(input.files?.[0] ?? null);
+  }
+
+  clearManageAvatar(input: HTMLInputElement): void {
+    this.store.onManageAvatarSelected(null);
+    input.value = '';
+  }
+
+  async submitManage(): Promise<void> {
     const tenantId = this.session.activeTenantId();
     if (!tenantId) return;
-    await this.store.submitAssignRole(tenantId);
+    await this.store.submitManage(tenantId);
   }
 }

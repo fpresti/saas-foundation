@@ -179,28 +179,118 @@
     aria-modal="true"
   >
     <div
-      class="w-full max-w-md rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 shadow-xl"
+      class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 shadow-xl"
     >
-      <h2 class="text-lg font-semibold">Assign role</h2>
+      <h2 class="text-lg font-semibold">Manage member</h2>
       <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
         {{ store.manageUserLabel() }}
+        @if (store.manageEmail()) {
+          <span class="block">{{ store.manageEmail() }}</span>
+        }
       </p>
-      @if (store.manageBusy() && !store.tenantRoles().length) {
-        <p class="mt-4 text-sm text-[var(--color-text-secondary)]">Loading roles…</p>
-      } @else if (store.tenantRoles().length === 0 && !store.manageBusy()) {
-        <p class="mt-4 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
-      } @else {
-        <label class="mt-3 block text-sm font-medium">Role</label>
+
+      @if (store.canManageMembers()) {
+        <div class="mt-4 flex items-center gap-4">
+          <app-user-avatar
+            [src]="store.manageAvatarPreviewUrl() ?? store.manageAvatarUrl()"
+            [initials]="(store.manageGivenName().trim().charAt(0) || '?').toUpperCase()"
+            size="md"
+          />
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium">Foto de perfil</p>
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+              JPEG, PNG o WebP · se aplica al guardar
+            </p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <label
+                for="manage-avatar"
+                class="cursor-pointer rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm hover:bg-[var(--color-bg-primary)]"
+              >
+                Elegir imagen
+              </label>
+              <input
+                #manageAvatarInput
+                id="manage-avatar"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="sr-only"
+                (change)="onManageAvatarSelected($event)"
+              />
+              @if (store.manageAvatarFile()) {
+                <button
+                  type="button"
+                  class="rounded px-2 py-1.5 text-sm text-[var(--color-text-secondary)] underline"
+                  (click)="clearManageAvatar(manageAvatarInput)"
+                >
+                  Quitar
+                </button>
+              }
+            </div>
+            @if (store.manageAvatarFile(); as file) {
+              <p class="mt-1 truncate text-xs text-[var(--color-text-secondary)]">
+                {{ file.name }}
+              </p>
+            }
+          </div>
+        </div>
+
+        <label class="mt-3 block text-sm font-medium">Nombre</label>
+        <input
+          type="text"
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="store.manageGivenName()"
+          (ngModelChange)="store.manageGivenName.set($event)"
+        />
+
+        <label class="mt-3 block text-sm font-medium">Apellidos</label>
+        <input
+          type="text"
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="store.manageFamilyName()"
+          (ngModelChange)="store.manageFamilyName.set($event)"
+        />
+
+        <label class="mt-3 block text-sm font-medium">Member type</label>
         <select
           class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
-          [ngModel]="store.manageRoleId()"
-          (ngModelChange)="store.manageRoleId.set($event)"
+          [ngModel]="store.manageMemberType()"
+          (ngModelChange)="store.manageMemberType.set($event)"
         >
-          @for (r of store.tenantRoles(); track r.id) {
-            <option [value]="r.id">{{ r.name }} ({{ r.code }})</option>
-          }
+          <option value="member">member</option>
+          <option value="owner">owner</option>
         </select>
+
+        <label class="mt-3 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            [ngModel]="store.manageActive()"
+            (ngModelChange)="store.manageActive.set($event)"
+          />
+          Active in this tenant
+        </label>
       }
+
+      @if (store.canManageRoles()) {
+        <h3 class="mt-5 text-sm font-semibold">Assign role</h3>
+        @if (store.manageBusy() && !store.tenantRoles().length) {
+          <p class="mt-2 text-sm text-[var(--color-text-secondary)]">Loading roles…</p>
+        } @else if (store.tenantRoles().length === 0 && !store.manageBusy()) {
+          <p class="mt-2 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
+        } @else {
+          <label class="mt-2 block text-sm font-medium">Role</label>
+          <select
+            class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+            [ngModel]="store.manageRoleId()"
+            (ngModelChange)="store.manageRoleId.set($event)"
+          >
+            <option value="">— No change —</option>
+            @for (r of store.tenantRoles(); track r.id) {
+              <option [value]="r.id">{{ r.name }} ({{ r.code }})</option>
+            }
+          </select>
+        }
+      }
+
       @if (store.manageError(); as me) {
         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ me }}</p>
       }
@@ -214,11 +304,11 @@
         </button>
         <button
           type="button"
-          [disabled]="store.manageBusy() || !store.manageRoleId()"
-          (click)="submitAssignRole()"
+          [disabled]="store.manageBusy()"
+          (click)="submitManage()"
           class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
         >
-          Assign role
+          {{ store.manageBusy() ? 'Saving…' : 'Save' }}
         </button>
       </div>
     </div>

@@ -4,6 +4,12 @@
       @if (step() === 'email') {
         <h1 class="text-2xl font-bold">Login</h1>
 
+        @if (deactivatedMessage(); as deactivated) {
+          <p class="mt-3 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300" role="alert">
+            {{ deactivated }}
+          </p>
+        }
+
         @if (isInvitationFlow()) {
           <p
             class="mt-3 rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-3 text-sm text-[var(--color-text-secondary)]"

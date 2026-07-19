@@ -25,6 +25,11 @@ const EXPECTED_REMOTE = [
   { version: '20260719125120', name: 'avatars_bucket_policies' },
   { version: '20260719125158', name: 'profiles_given_family_name' },
   { version: '20260719125538', name: 'avatars_select_own_only' },
+  { version: '20260719133814', name: 'members_owner_management' },
+  { version: '20260719133837', name: 'members_list_and_rpcs' },
+  { version: '20260719133847', name: 'avatars_owner_policies' },
+  { version: '20260719133856', name: 'members_access_context_active' },
+  { version: '20260719140133', name: 'block_deactivated_member_login' },
 ];
 
 function localMigrations() {

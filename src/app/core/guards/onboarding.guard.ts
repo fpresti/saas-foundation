@@ -13,6 +13,10 @@ export const onboardingGuard: CanActivateFn = async (): Promise<boolean | UrlTre
 
   await sessionStore.ensureAccessContextReady();
 
+  if (!sessionStore.isAuthenticated()) {
+    return router.createUrlTree(['/login'], { queryParams: { reason: 'deactivated' } });
+  }
+
   const hasNoTenants = sessionStore.allowedTenants().length === 0;
   const isSuperAdmin = sessionStore.isSuperAdmin();
 

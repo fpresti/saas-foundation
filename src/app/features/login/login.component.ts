@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   effect,
   inject,
   OnInit,
@@ -20,6 +21,10 @@ import {
   markInvitationAuthReady,
   parseInvitationTokenFromUrl,
 } from '../../core/auth/invitation-auth';
+import {
+  MEMBERSHIP_DEACTIVATED_CODE,
+  MEMBERSHIP_DEACTIVATED_MESSAGE,
+} from '../../core/auth/membership-deactivated';
 import { SessionStore } from '../../core/auth/session.store';
 
 @Component({
@@ -38,11 +43,26 @@ export class LoginComponent implements OnInit {
 
   private navigatedAfterAuth = false;
 
+  readonly deactivatedMessage = computed(() => {
+    const fromQuery = this.route.snapshot.queryParamMap.get('reason') === 'deactivated';
+    const fromSignIn =
+      this.sessionStore.signInError()?.code === MEMBERSHIP_DEACTIVATED_CODE;
+    return fromQuery || fromSignIn ? MEMBERSHIP_DEACTIVATED_MESSAGE : null;
+  });
+
   constructor() {
     effect(() => {
       const session = this.sessionStore.session();
       const authLoading = this.sessionStore.authLoading();
-      if (!authLoading && session && !this.navigatedAfterAuth) {
+      const accessStatus = this.sessionStore.accessContextStatus();
+      const deactivated = this.sessionStore.accessContext()?.membership_deactivated === true;
+      if (
+        !authLoading &&
+        session &&
+        accessStatus === 'ready' &&
+        !deactivated &&
+        !this.navigatedAfterAuth
+      ) {
         this.navigatedAfterAuth = true;
         void this.navigateAfterAuth();
       }
@@ -51,6 +71,9 @@ export class LoginComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.sessionStore.waitForAuthSettled();
+    if (this.sessionStore.isAuthenticated()) {
+      await this.sessionStore.ensureAccessContextReady();
+    }
     await this.tryRedirectIfAuthenticated();
   }
 
@@ -79,6 +102,10 @@ export class LoginComponent implements OnInit {
     this.returnUrl().startsWith('/accept-invitation');
 
   private async navigateAfterAuth(): Promise<void> {
+    if (!this.sessionStore.isAuthenticated()) {
+      this.navigatedAfterAuth = false;
+      return;
+    }
     const destination = this.returnUrl();
     const inviteToken = parseInvitationTokenFromUrl(destination);
     if (inviteToken) {

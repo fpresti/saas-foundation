@@ -7,6 +7,7 @@ export type LayoutUiState = {
 export type NavIcon =
   | 'home'
   | 'settings'
+  | 'user'
   | 'users'
   | 'building'
   | 'shield'
@@ -22,6 +23,8 @@ export type NavItem = {
   disabled?: boolean;
   /** When set, item is hidden unless user has this permission (cosmetic). */
   permission?: string;
+  /** When true, item is hidden unless tenant_role is owner. */
+  requiresOwner?: boolean;
 };
 
 export type NavSection = {

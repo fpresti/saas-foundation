@@ -75,8 +75,8 @@ export class ProfileService {
     if (n) throw n;
   }
 
-  /** Resize/compress then upload avatar; returns its public URL. */
-  async uploadOwnAvatar(file: File): Promise<string> {
+  /** Resize/compress then upload avatar for a user; returns public URL. */
+  async uploadAvatarForUser(userId: string, file: File): Promise<string> {
     if (!isAllowedAvatarSourceMime(file.type)) {
       throw {
         code: 'invalid_mime',
@@ -91,15 +91,6 @@ export class ProfileService {
     }
 
     const prepared = await prepareAvatarImage(file);
-
-    const { data: userData, error: userError } = await this.supabase.auth.getUser();
-    const userErr = normalizeError(userError);
-    if (userErr) throw userErr;
-    const userId = userData.user?.id;
-    if (!userId) {
-      throw { code: 'not_authenticated', message: 'Not authenticated' };
-    }
-
     const ext = prepared.type === 'image/jpeg' ? 'jpg' : 'webp';
     const path = `${userId}/avatar.${ext}`;
 
@@ -111,7 +102,18 @@ export class ProfileService {
     if (uploadErr) throw uploadErr;
 
     const { data } = this.supabase.storage.from(AVATARS_BUCKET).getPublicUrl(path);
-    // Bust CDN/cache when replacing the same path.
     return `${data.publicUrl}?t=${Date.now()}`;
+  }
+
+  /** Upload avatar for the current user and return its public URL. */
+  async uploadOwnAvatar(file: File): Promise<string> {
+    const { data: userData, error: userError } = await this.supabase.auth.getUser();
+    const userErr = normalizeError(userError);
+    if (userErr) throw userErr;
+    const userId = userData.user?.id;
+    if (!userId) {
+      throw { code: 'not_authenticated', message: 'Not authenticated' };
+    }
+    return this.uploadAvatarForUser(userId, file);
   }
 }

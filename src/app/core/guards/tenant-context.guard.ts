@@ -22,6 +22,10 @@ export const tenantContextGuard: CanActivateFn = async (route, state): Promise<b
 
   await sessionStore.ensureAccessContextReady();
 
+  if (!sessionStore.isAuthenticated()) {
+    return router.createUrlTree(['/login'], { queryParams: { reason: 'deactivated' } });
+  }
+
   if (isTenantSelectionOrOnboardingPath(state.url)) {
     return true;
   }

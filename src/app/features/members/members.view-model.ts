@@ -9,6 +9,7 @@ export interface MemberListItem {
   familyName: string | null;
   avatarUrl: string | null;
   memberType: 'owner' | 'member';
+  active: boolean;
   roleNames: string[];
   roleCodes: string[];
 }
@@ -17,27 +18,25 @@ export interface MemberListItem {
 export type MemberTableRow = {
   id: string;
   avatarUrl: string | null;
-  displayName: string;
+  givenName: string;
+  familyName: string;
   email: string;
   memberType: string;
+  statusLabel: string;
   rolesLabel: string;
+  active: boolean;
 } & Record<string, unknown>;
-
-export function memberDisplayName(item: MemberListItem): string {
-  const name = [item.givenName, item.familyName]
-    .map((part) => part?.trim() ?? '')
-    .filter(Boolean)
-    .join(' ');
-  return name || item.email || item.userId;
-}
 
 export function toMemberTableRow(item: MemberListItem): MemberTableRow {
   return {
     id: item.userId,
     avatarUrl: item.avatarUrl,
-    displayName: memberDisplayName(item),
+    givenName: item.givenName?.trim() || '—',
+    familyName: item.familyName?.trim() || '—',
     email: item.email ?? '—',
     memberType: item.memberType,
+    statusLabel: item.active ? 'Active' : 'Inactive',
     rolesLabel: item.roleNames.length > 0 ? item.roleNames.join(', ') : '—',
+    active: item.active,
   } as MemberTableRow;
 }

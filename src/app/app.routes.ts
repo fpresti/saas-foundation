@@ -4,6 +4,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { memberProfileOnboardingGuard } from './core/guards/member-profile-onboarding.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
+import { tenantOwnerGuard } from './core/guards/tenant-owner.guard';
 import { AppShellPageComponent } from './features/app-shell';
 
 export const routes: Routes = [
@@ -64,15 +65,21 @@ export const routes: Routes = [
           import('./features/home/routes').then(m => m.homeRoutes)
       },
       {
+        path: 'profile',
+        canActivate: [onboardingGuard],
+        loadChildren: () =>
+          import('./features/profile/routes').then((m) => m.profileRoutes),
+      },
+      {
         path: 'settings',
-        canActivate: [onboardingGuard, permissionGuard],
+        canActivate: [onboardingGuard, tenantOwnerGuard, permissionGuard],
         data: { permission: 'tenant.settings.read' },
         loadChildren: () =>
           import('./features/settings/routes').then(m => m.settingsRoutes),
       },
       {
         path: 'members',
-        canActivate: [onboardingGuard, permissionGuard],
+        canActivate: [onboardingGuard, tenantOwnerGuard, permissionGuard],
         data: { permission: 'tenant.members.read' },
         loadComponent: () =>
           import('./features/members/members.component').then(m => m.MembersComponent),

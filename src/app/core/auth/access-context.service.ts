@@ -41,6 +41,7 @@ export class AccessContextService {
         tenant_role: null,
         tenant_status: null,
         allowed_tenants: [],
+        membership_deactivated: false,
       };
     }
 
@@ -56,6 +57,7 @@ export class AccessContextService {
       allowed_tenants: Array.isArray(row.allowed_tenants)
         ? (row.allowed_tenants as unknown as AccessContext['allowed_tenants'])
         : [],
+      membership_deactivated: Boolean(row.membership_deactivated),
     };
   }
 

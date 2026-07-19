@@ -487,6 +487,7 @@ export type Database = {
         Returns: {
           allowed_tenants: Json
           is_super_admin: boolean
+          membership_deactivated: boolean
           tenant_id: string
           tenant_role: string
           tenant_status: string
@@ -507,6 +508,7 @@ export type Database = {
       list_tenant_members: {
         Args: { p_tenant_id: string }
         Returns: {
+          active: boolean
           avatar_url: string | null
           email: string
           family_name: string | null
@@ -514,6 +516,24 @@ export type Database = {
           member_type: string
           user_id: string
         }[]
+      }
+      set_tenant_member_active: {
+        Args: { p_active: boolean; p_tenant_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      set_tenant_member_type: {
+        Args: { p_member_type: string; p_tenant_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      update_tenant_member_profile: {
+        Args: {
+          p_avatar_url?: string | null
+          p_family_name: string
+          p_given_name: string
+          p_tenant_id: string
+          p_user_id: string
+        }
+        Returns: undefined
       }
       shares_tenant_with_user: { Args: { p_user_id: string }; Returns: boolean }
     }

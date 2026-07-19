@@ -1,6 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { AppResetService } from '../../core/services/app-reset.service';
 import { PermissionService } from '../../core/auth/permission.service';
+import { SessionStore } from '../../core/auth/session.store';
+import { ProfileService } from '../../core/profile/profile.service';
 import type { NormalizedError } from '../../core/utils/supabase-error.util';
 import { MEMBERS_PERMISSION } from './members.permissions';
 import {
@@ -17,7 +19,9 @@ import {
 @Injectable({ providedIn: 'root' })
 export class MembersStore {
   private readonly membersService = inject(MembersService);
+  private readonly profileService = inject(ProfileService);
   private readonly permission = inject(PermissionService);
+  private readonly sessionStore = inject(SessionStore);
   private readonly appReset = inject(AppResetService);
 
   readonly memberItems = signal<MemberListItem[]>([]);
@@ -26,10 +30,11 @@ export class MembersStore {
   readonly error = signal<NormalizedError | null>(null);
   readonly canInvite = signal(false);
   readonly canManageRoles = signal(false);
-
-  readonly tableRows = computed(() =>
-    this.memberItems().map(toMemberTableRow)
+  readonly canManageMembers = computed(
+    () => this.sessionStore.accessContext()?.tenant_role === 'owner'
   );
+
+  readonly tableRows = computed(() => this.memberItems().map(toMemberTableRow));
 
   readonly inviteOpen = signal(false);
   readonly inviteEmail = signal('');
@@ -37,13 +42,20 @@ export class MembersStore {
   readonly inviteError = signal<string | null>(null);
   readonly inviteResult = signal<{ email: string; expiresAt: string } | null>(null);
 
-  /** invitation id → pending action */
   readonly pendingInvitationBusy = signal<Record<string, 'delete' | 'resend'>>({});
   readonly pendingInvitationMessage = signal<string | null>(null);
 
   readonly manageOpen = signal(false);
   readonly manageUserId = signal<string | null>(null);
   readonly manageUserLabel = signal('');
+  readonly manageEmail = signal('');
+  readonly manageGivenName = signal('');
+  readonly manageFamilyName = signal('');
+  readonly manageMemberType = signal<'owner' | 'member'>('member');
+  readonly manageActive = signal(true);
+  readonly manageAvatarUrl = signal<string | null>(null);
+  readonly manageAvatarFile = signal<File | null>(null);
+  readonly manageAvatarPreviewUrl = signal<string | null>(null);
   readonly tenantRoles = signal<TenantRoleOption[]>([]);
   readonly manageRoleId = signal('');
   readonly manageBusy = signal(false);
@@ -120,11 +132,7 @@ export class MembersStore {
       this.inviteResult.set({ email: res.email, expiresAt: res.expires_at });
       await this.load(tenantId);
     } catch (e: unknown) {
-      const msg =
-        typeof e === 'object' && e !== null && 'message' in e
-          ? String((e as { message: unknown }).message)
-          : 'Invitation failed.';
-      this.inviteError.set(msg);
+      this.inviteError.set(errorMessage(e, 'Invitation failed.'));
     } finally {
       this.inviteBusy.set(false);
     }
@@ -137,11 +145,7 @@ export class MembersStore {
       await this.membersService.revokeInvitation({ tenantId, invitationId });
       await this.load(tenantId);
     } catch (e: unknown) {
-      const msg =
-        typeof e === 'object' && e !== null && 'message' in e
-          ? String((e as { message: unknown }).message)
-          : 'Could not delete invitation.';
-      this.pendingInvitationMessage.set(msg);
+      this.pendingInvitationMessage.set(errorMessage(e, 'Could not delete invitation.'));
     } finally {
       this.pendingInvitationBusy.update((m) => {
         const next = { ...m };
@@ -159,11 +163,7 @@ export class MembersStore {
       this.pendingInvitationMessage.set('Invitation email sent again.');
       await this.load(tenantId);
     } catch (e: unknown) {
-      const msg =
-        typeof e === 'object' && e !== null && 'message' in e
-          ? String((e as { message: unknown }).message)
-          : 'Could not resend invitation.';
-      this.pendingInvitationMessage.set(msg);
+      this.pendingInvitationMessage.set(errorMessage(e, 'Could not resend invitation.'));
     } finally {
       this.pendingInvitationBusy.update((m) => {
         const next = { ...m };
@@ -174,54 +174,116 @@ export class MembersStore {
   }
 
   openManage(row: MemberTableRow, tenantId: string): void {
+    const item = this.memberItems().find((m) => m.userId === row.id);
+    this.clearManageAvatarPreview();
     this.manageError.set(null);
     this.manageUserId.set(row.id);
-    this.manageUserLabel.set(row.displayName);
+    this.manageUserLabel.set(
+      [item?.givenName, item?.familyName].filter(Boolean).join(' ') || item?.email || row.id
+    );
+    this.manageEmail.set(item?.email ?? row.email);
+    this.manageGivenName.set(item?.givenName ?? '');
+    this.manageFamilyName.set(item?.familyName ?? '');
+    this.manageMemberType.set(item?.memberType === 'owner' ? 'owner' : 'member');
+    this.manageActive.set(item?.active ?? true);
+    this.manageAvatarUrl.set(item?.avatarUrl ?? null);
+    this.manageAvatarFile.set(null);
     this.manageRoleId.set('');
     this.manageOpen.set(true);
-    this.manageBusy.set(true);
-    this.membersService
-      .listRolesForTenant(tenantId)
-      .then((roles) => {
-        this.tenantRoles.set(roles);
-        if (roles.length && !this.manageRoleId()) {
-          this.manageRoleId.set(roles[0]!.id);
-        }
-      })
-      .catch((e: unknown) => {
-        const msg =
-          typeof e === 'object' && e !== null && 'message' in e
-            ? String((e as { message: unknown }).message)
-            : 'Could not load roles.';
-        this.manageError.set(msg);
-        this.tenantRoles.set([]);
-      })
-      .finally(() => this.manageBusy.set(false));
+
+    if (this.canManageRoles()) {
+      this.manageBusy.set(true);
+      this.membersService
+        .listRolesForTenant(tenantId)
+        .then((roles) => {
+          this.tenantRoles.set(roles);
+        })
+        .catch((e: unknown) => {
+          this.manageError.set(errorMessage(e, 'Could not load roles.'));
+          this.tenantRoles.set([]);
+        })
+        .finally(() => this.manageBusy.set(false));
+    } else {
+      this.tenantRoles.set([]);
+    }
   }
 
   closeManage(): void {
+    this.clearManageAvatarPreview();
     this.manageOpen.set(false);
     this.manageUserId.set(null);
   }
 
-  async submitAssignRole(tenantId: string): Promise<void> {
+  onManageAvatarSelected(file: File | null): void {
+    this.clearManageAvatarPreview();
+    if (!file) {
+      this.manageAvatarFile.set(null);
+      return;
+    }
+    this.manageAvatarFile.set(file);
+    this.manageAvatarPreviewUrl.set(URL.createObjectURL(file));
+  }
+
+  async submitManage(tenantId: string): Promise<void> {
     const userId = this.manageUserId();
-    const roleId = this.manageRoleId();
-    if (!userId || !roleId) return;
+    if (!userId) return;
+
     this.manageBusy.set(true);
     this.manageError.set(null);
     try {
-      await this.membersService.assignTenantUserRole({ tenantId, userId, roleId });
+      if (this.canManageMembers()) {
+        let avatarUrl: string | undefined;
+        const file = this.manageAvatarFile();
+        if (file) {
+          avatarUrl = await this.profileService.uploadAvatarForUser(userId, file);
+        }
+
+        await this.membersService.updateMemberProfile({
+          tenantId,
+          userId,
+          givenName: this.manageGivenName(),
+          familyName: this.manageFamilyName(),
+          ...(avatarUrl !== undefined ? { avatarUrl } : {}),
+        });
+
+        await this.membersService.setMemberType({
+          tenantId,
+          userId,
+          memberType: this.manageMemberType(),
+        });
+
+        await this.membersService.setMemberActive({
+          tenantId,
+          userId,
+          active: this.manageActive(),
+        });
+      }
+
+      if (this.canManageRoles()) {
+        const roleId = this.manageRoleId();
+        if (roleId) {
+          await this.membersService.assignTenantUserRole({ tenantId, userId, roleId });
+        }
+      }
+
       this.closeManage();
       await this.load(tenantId);
     } catch (e: unknown) {
-      const msg =
-        typeof e === 'object' && e !== null && 'message' in e
-          ? String((e as { message: unknown }).message)
-          : 'Could not assign role.';
-      this.manageError.set(msg);
+      this.manageError.set(errorMessage(e, 'Could not save member.'));
     } finally {
       this.manageBusy.set(false);
     }
   }
+
+  private clearManageAvatarPreview(): void {
+    const preview = this.manageAvatarPreviewUrl();
+    if (preview) URL.revokeObjectURL(preview);
+    this.manageAvatarPreviewUrl.set(null);
+  }
+}
+
+function errorMessage(e: unknown, fallback: string): string {
+  return typeof e === 'object' && e !== null && 'message' in e
+    ? String((e as { message: unknown }).message)
+    : fallback;
 }

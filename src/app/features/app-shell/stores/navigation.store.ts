@@ -43,6 +43,7 @@ export class NavigationStore {
   readonly sections = computed<readonly NavSection[]>(() => {
     const perms = this.navPermissions();
     const base = this.navigationService.getSections();
+    const isOwner = this.sessionStore.accessContext()?.tenant_role === 'owner';
     const canShowSwitchTenant =
       this.sessionStore.isSuperAdmin() &&
       this.sessionStore.allowedTenants().length > 1;
@@ -51,6 +52,7 @@ export class NavigationStore {
       ...section,
       items: section.items.filter((item) => {
         if (item.disabled) return false;
+        if (item.requiresOwner && !isOwner) return false;
         if (!item.permission) return true;
         return perms[item.permission] === true;
       }),

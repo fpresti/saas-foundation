@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { MembersStore } from './members.store';
 import { MembersService } from './members.service';
 import { PermissionService } from '../../core/auth/permission.service';
+import { SessionStore } from '../../core/auth/session.store';
+import { ProfileService } from '../../core/profile/profile.service';
 import { AppResetService } from '../../core/services/app-reset.service';
 import { MEMBERS_PERMISSION } from './members.permissions';
 
@@ -36,6 +38,11 @@ describe('MembersStore', () => {
         MembersStore,
         { provide: MembersService, useValue: membersService },
         { provide: PermissionService, useValue: { hasPermission } },
+        {
+          provide: SessionStore,
+          useValue: { accessContext: () => ({ tenant_role: 'owner' }) },
+        },
+        { provide: ProfileService, useValue: { uploadAvatarForUser: vi.fn() } },
         { provide: AppResetService, useValue: { registerResettable: vi.fn() } },
       ],
     });
@@ -52,6 +59,7 @@ describe('MembersStore', () => {
         familyName: null,
         avatarUrl: null,
         memberType: 'member',
+        active: true,
         roleNames: [],
         roleCodes: [],
       },
@@ -84,6 +92,7 @@ describe('MembersStore', () => {
         familyName: null,
         avatarUrl: null,
         memberType: 'owner',
+        active: true,
         roleNames: ['Admin'],
         roleCodes: ['admin'],
       },

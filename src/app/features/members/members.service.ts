@@ -91,12 +91,14 @@ export class MembersService {
         familyName: m.family_name ?? null,
         avatarUrl: m.avatar_url ?? null,
         memberType,
+        active: m.active !== false,
         roleNames: [...roles.names],
         roleCodes: [...roles.codes],
       });
     }
 
     result.sort((a, b) => {
+      if (a.active !== b.active) return a.active ? -1 : 1;
       const left = [a.givenName, a.familyName].filter(Boolean).join(' ') || a.email || a.userId;
       const right = [b.givenName, b.familyName].filter(Boolean).join(' ') || b.email || b.userId;
       return left.localeCompare(right);
@@ -189,6 +191,61 @@ export class MembersService {
       p_user_id: params.userId,
       p_role_id: params.roleId,
     });
+    const n = normalizeError(error);
+    if (n) throw n;
+  }
+
+  async setMemberType(params: {
+    tenantId: string;
+    userId: string;
+    memberType: 'owner' | 'member';
+  }): Promise<void> {
+    const { error } = await this.supabase.rpc('set_tenant_member_type', {
+      p_tenant_id: params.tenantId,
+      p_user_id: params.userId,
+      p_member_type: params.memberType,
+    });
+    const n = normalizeError(error);
+    if (n) throw n;
+  }
+
+  async setMemberActive(params: {
+    tenantId: string;
+    userId: string;
+    active: boolean;
+  }): Promise<void> {
+    const { error } = await this.supabase.rpc('set_tenant_member_active', {
+      p_tenant_id: params.tenantId,
+      p_user_id: params.userId,
+      p_active: params.active,
+    });
+    const n = normalizeError(error);
+    if (n) throw n;
+  }
+
+  async updateMemberProfile(params: {
+    tenantId: string;
+    userId: string;
+    givenName: string;
+    familyName: string;
+    avatarUrl?: string | null;
+  }): Promise<void> {
+    const args: {
+      p_tenant_id: string;
+      p_user_id: string;
+      p_given_name: string;
+      p_family_name: string;
+      p_avatar_url?: string;
+    } = {
+      p_tenant_id: params.tenantId,
+      p_user_id: params.userId,
+      p_given_name: params.givenName,
+      p_family_name: params.familyName,
+    };
+    if (params.avatarUrl) {
+      args.p_avatar_url = params.avatarUrl;
+    }
+    const { error } = await this.supabase.rpc('update_tenant_member_profile', args);
     const n = normalizeError(error);
     if (n) throw n;
   }
