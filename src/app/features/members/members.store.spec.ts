@@ -15,6 +15,7 @@ describe('MembersStore', () => {
     createInvitation: ReturnType<typeof vi.fn>;
     listRolesForTenant: ReturnType<typeof vi.fn>;
     assignTenantUserRole: ReturnType<typeof vi.fn>;
+    setTenantMemberRoles: ReturnType<typeof vi.fn>;
   };
   let hasPermission: ReturnType<typeof vi.fn>;
 
@@ -30,6 +31,7 @@ describe('MembersStore', () => {
       }),
       listRolesForTenant: vi.fn(),
       assignTenantUserRole: vi.fn(),
+      setTenantMemberRoles: vi.fn(),
     };
     hasPermission = vi.fn().mockResolvedValue(false);
 
@@ -37,7 +39,10 @@ describe('MembersStore', () => {
       providers: [
         MembersStore,
         { provide: MembersService, useValue: membersService },
-        { provide: PermissionService, useValue: { hasPermission } },
+        {
+          provide: PermissionService,
+          useValue: { hasPermission, clearCache: vi.fn() },
+        },
         {
           provide: SessionStore,
           useValue: { accessContext: () => ({ tenant_role: 'owner' }) },
@@ -60,6 +65,7 @@ describe('MembersStore', () => {
         avatarUrl: null,
         memberType: 'member',
         active: true,
+        roleIds: [],
         roleNames: [],
         roleCodes: [],
       },
@@ -93,8 +99,9 @@ describe('MembersStore', () => {
         avatarUrl: null,
         memberType: 'owner',
         active: true,
-        roleNames: ['Admin'],
-        roleCodes: ['admin'],
+        roleIds: [],
+        roleNames: ['Tenant manager'],
+        roleCodes: ['tenant_manager'],
       },
     ]);
     membersService.listPendingInvitations.mockResolvedValue([

@@ -270,24 +270,30 @@
         </label>
       }
 
-      @if (store.canManageRoles()) {
-        <h3 class="mt-5 text-sm font-semibold">Assign role</h3>
+      @if (store.canManageRoles() && store.manageMemberType() !== 'owner') {
+        <h3 class="mt-5 text-sm font-semibold">Roles</h3>
         @if (store.manageBusy() && !store.tenantRoles().length) {
           <p class="mt-2 text-sm text-[var(--color-text-secondary)]">Loading roles…</p>
         } @else if (store.tenantRoles().length === 0 && !store.manageBusy()) {
           <p class="mt-2 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
         } @else {
-          <label class="mt-2 block text-sm font-medium">Role</label>
-          <select
-            class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
-            [ngModel]="store.manageRoleId()"
-            (ngModelChange)="store.manageRoleId.set($event)"
-          >
-            <option value="">— No change —</option>
+          <ul class="mt-2 space-y-2">
             @for (r of store.tenantRoles(); track r.id) {
-              <option [value]="r.id">{{ r.name }} ({{ r.code }})</option>
+              <li>
+                <label class="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    [checked]="store.manageRoleIds().includes(r.id)"
+                    (change)="
+                      store.toggleManageRole(r.id, $any($event.target).checked)
+                    "
+                  />
+                  <span>{{ r.name }}</span>
+                  <span class="text-xs text-[var(--color-text-secondary)]">({{ r.code }})</span>
+                </label>
+              </li>
             }
-          </select>
+          </ul>
         }
       }
 

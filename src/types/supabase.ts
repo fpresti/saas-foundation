@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      feature_permissions: {
+        Row: {
+          created_at: string
+          feature_id: string
+          permission_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_id: string
+          permission_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_id?: string
+          permission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_permissions_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      features: {
+        Row: {
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       invitations: {
         Row: {
           accepted_at: string | null
@@ -90,6 +150,39 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      plan_features: {
+        Row: {
+          created_at: string
+          feature_id: string
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_id: string
+          plan_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_id?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plans: {
         Row: {
@@ -347,6 +440,7 @@ export type Database = {
       }
       tenant_members: {
         Row: {
+          active: boolean
           created_at: string
           member_type: string
           tenant_id: string
@@ -354,6 +448,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          active?: boolean
           created_at?: string
           member_type: string
           tenant_id: string
@@ -361,6 +456,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          active?: boolean
           created_at?: string
           member_type?: string
           tenant_id?: string
@@ -407,21 +503,6 @@ export type Database = {
         }
         Relationships: []
       }
-      test: {
-        Row: {
-          id: number
-          name: string | null
-        }
-        Insert: {
-          id?: number
-          name?: string | null
-        }
-        Update: {
-          id?: number
-          name?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -439,6 +520,10 @@ export type Database = {
         Args: { p_role_id: string; p_tenant_id: string; p_user_id: string }
         Returns: undefined
       }
+      change_tenant_plan: {
+        Args: { p_plan_id: string; p_tenant_id: string }
+        Returns: undefined
+      }
       create_invitation: {
         Args: {
           p_email: string
@@ -454,20 +539,6 @@ export type Database = {
           tenant_id: string
           token: string
         }[]
-      }
-      resend_invitation: {
-        Args: { p_invitation_id: string }
-        Returns: {
-          email: string
-          expires_at: string
-          invitation_id: string
-          tenant_id: string
-          token: string
-        }[]
-      }
-      revoke_invitation: {
-        Args: { p_invitation_id: string }
-        Returns: undefined
       }
       create_tenant_with_owner: {
         Args: {
@@ -509,25 +580,52 @@ export type Database = {
         Args: { p_tenant_id: string }
         Returns: {
           active: boolean
-          avatar_url: string | null
+          avatar_url: string
           email: string
-          family_name: string | null
-          given_name: string | null
+          family_name: string
+          given_name: string
           member_type: string
           user_id: string
         }[]
       }
+      migrate_tenant_system_roles: {
+        Args: { p_tenant_id: string }
+        Returns: undefined
+      }
+      resend_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: {
+          email: string
+          expires_at: string
+          invitation_id: string
+          tenant_id: string
+          token: string
+        }[]
+      }
+      revoke_invitation: {
+        Args: { p_invitation_id: string }
+        Returns: undefined
+      }
+      seed_default_tenant_roles: {
+        Args: { p_tenant_id: string }
+        Returns: undefined
+      }
       set_tenant_member_active: {
         Args: { p_active: boolean; p_tenant_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      set_tenant_member_roles: {
+        Args: { p_role_ids: string[]; p_tenant_id: string; p_user_id: string }
         Returns: undefined
       }
       set_tenant_member_type: {
         Args: { p_member_type: string; p_tenant_id: string; p_user_id: string }
         Returns: undefined
       }
+      shares_tenant_with_user: { Args: { p_user_id: string }; Returns: boolean }
       update_tenant_member_profile: {
         Args: {
-          p_avatar_url?: string | null
+          p_avatar_url?: string
           p_family_name: string
           p_given_name: string
           p_tenant_id: string
@@ -535,7 +633,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      shares_tenant_with_user: { Args: { p_user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

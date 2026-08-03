@@ -10,6 +10,7 @@ export interface MemberListItem {
   avatarUrl: string | null;
   memberType: 'owner' | 'member';
   active: boolean;
+  roleIds: string[];
   roleNames: string[];
   roleCodes: string[];
 }

@@ -64,16 +64,20 @@ export class MembersService {
       }
     }
 
-    const rolesByUser = new Map<string, { names: string[]; codes: string[] }>();
+    const rolesByUser = new Map<
+      string,
+      { ids: string[]; names: string[]; codes: string[] }
+    >();
     for (const row of tmr) {
       const meta = roleById.get(row.role_id);
       if (!meta) continue;
       let bucket = rolesByUser.get(row.user_id);
       if (!bucket) {
-        bucket = { names: [], codes: [] };
+        bucket = { ids: [], names: [], codes: [] };
         rolesByUser.set(row.user_id, bucket);
       }
-      if (!bucket.codes.includes(meta.code)) {
+      if (!bucket.ids.includes(row.role_id)) {
+        bucket.ids.push(row.role_id);
         bucket.codes.push(meta.code);
         bucket.names.push(meta.name);
       }
@@ -83,7 +87,7 @@ export class MembersService {
     for (const m of members) {
       const memberType: 'owner' | 'member' =
         m.member_type === 'owner' ? 'owner' : 'member';
-      const roles = rolesByUser.get(m.user_id) ?? { names: [], codes: [] };
+      const roles = rolesByUser.get(m.user_id) ?? { ids: [], names: [], codes: [] };
       result.push({
         userId: m.user_id,
         email: m.email ?? null,
@@ -92,6 +96,7 @@ export class MembersService {
         avatarUrl: m.avatar_url ?? null,
         memberType,
         active: m.active !== false,
+        roleIds: [...roles.ids],
         roleNames: [...roles.names],
         roleCodes: [...roles.codes],
       });
@@ -181,15 +186,16 @@ export class MembersService {
     return row;
   }
 
-  async assignTenantUserRole(params: {
+  /** Replace the full set of roles for a member (multi-rol). */
+  async setTenantMemberRoles(params: {
     tenantId: string;
     userId: string;
-    roleId: string;
+    roleIds: string[];
   }): Promise<void> {
-    const { error } = await this.supabase.rpc('assign_tenant_user_role', {
+    const { error } = await this.supabase.rpc('set_tenant_member_roles', {
       p_tenant_id: params.tenantId,
       p_user_id: params.userId,
-      p_role_id: params.roleId,
+      p_role_ids: params.roleIds,
     });
     const n = normalizeError(error);
     if (n) throw n;

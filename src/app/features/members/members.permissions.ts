@@ -7,6 +7,6 @@ export const MEMBERS_PERMISSION = {
   read: 'tenant.members.read',
   /** Create invitation RPC. */
   invite: 'tenant.members.invite',
-  /** Assign roles via `assign_tenant_user_role` (and future remove). */
+  /** Assign roles via `set_tenant_member_roles`. */
   manageRoles: 'tenant.roles.assign',
 } as const;

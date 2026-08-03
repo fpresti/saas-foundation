@@ -5,12 +5,14 @@ import {
   inject,
   untracked,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { SessionStore } from '../../core/auth/session.store';
 import { SettingsStore } from './settings.store';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
+  imports: [FormsModule],
   templateUrl: './settings.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -27,5 +29,11 @@ export class SettingsComponent {
       }
       void this.store.load(tenantId);
     });
+  }
+
+  changePlan(): void {
+    const tenantId = this.session.activeTenantId();
+    if (!tenantId) return;
+    void this.store.changePlan(tenantId);
   }
 }

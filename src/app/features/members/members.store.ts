@@ -57,7 +57,7 @@ export class MembersStore {
   readonly manageAvatarFile = signal<File | null>(null);
   readonly manageAvatarPreviewUrl = signal<string | null>(null);
   readonly tenantRoles = signal<TenantRoleOption[]>([]);
-  readonly manageRoleId = signal('');
+  readonly manageRoleIds = signal<string[]>([]);
   readonly manageBusy = signal(false);
   readonly manageError = signal<string | null>(null);
 
@@ -188,7 +188,7 @@ export class MembersStore {
     this.manageActive.set(item?.active ?? true);
     this.manageAvatarUrl.set(item?.avatarUrl ?? null);
     this.manageAvatarFile.set(null);
-    this.manageRoleId.set('');
+    this.manageRoleIds.set([...(item?.roleIds ?? [])]);
     this.manageOpen.set(true);
 
     if (this.canManageRoles()) {
@@ -206,6 +206,17 @@ export class MembersStore {
     } else {
       this.tenantRoles.set([]);
     }
+  }
+
+  toggleManageRole(roleId: string, checked: boolean): void {
+    const current = this.manageRoleIds();
+    if (checked) {
+      if (!current.includes(roleId)) {
+        this.manageRoleIds.set([...current, roleId]);
+      }
+      return;
+    }
+    this.manageRoleIds.set(current.filter((id) => id !== roleId));
   }
 
   closeManage(): void {
@@ -259,11 +270,13 @@ export class MembersStore {
         });
       }
 
-      if (this.canManageRoles()) {
-        const roleId = this.manageRoleId();
-        if (roleId) {
-          await this.membersService.assignTenantUserRole({ tenantId, userId, roleId });
-        }
+      if (this.canManageRoles() && this.manageMemberType() !== 'owner') {
+        await this.membersService.setTenantMemberRoles({
+          tenantId,
+          userId,
+          roleIds: this.manageRoleIds(),
+        });
+        this.permission.clearCache();
       }
 
       this.closeManage();
