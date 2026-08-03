@@ -33,6 +33,12 @@ export class NavigationService {
             requiresOwner: true,
           },
           { label: 'Roles', icon: 'shield', routerLink: '/roles', permission: 'tenant.roles.read' },
+          {
+            label: 'Platform',
+            icon: 'settings',
+            routerLink: '/platform',
+            requiresSuperAdmin: true,
+          },
         ],
       },
     ];

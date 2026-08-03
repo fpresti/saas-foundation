@@ -25,6 +25,8 @@ export type NavItem = {
   permission?: string;
   /** When true, item is hidden unless tenant_role is owner. */
   requiresOwner?: boolean;
+  /** When true, item is hidden unless user is platform super_admin. */
+  requiresSuperAdmin?: boolean;
 };
 
 export type NavSection = {

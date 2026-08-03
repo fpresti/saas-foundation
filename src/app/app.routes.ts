@@ -3,6 +3,7 @@ import { permissionGuard } from './core/auth/permission.guard';
 import { authGuard } from './core/guards/auth.guard';
 import { memberProfileOnboardingGuard } from './core/guards/member-profile-onboarding.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
+import { superAdminGuard } from './core/guards/super-admin.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
 import { tenantOwnerGuard } from './core/guards/tenant-owner.guard';
 import { AppShellPageComponent } from './features/app-shell';
@@ -95,7 +96,15 @@ export const routes: Routes = [
         data: { permission: 'tenant.roles.read' },
         loadChildren: () =>
           import('./features/roles/routes').then(m => m.rolesRoutes),
-      }
+      },
+      {
+        path: 'platform',
+        canActivate: [onboardingGuard, superAdminGuard],
+        loadChildren: () =>
+          import('./features/platform-catalog/routes').then(
+            (m) => m.platformCatalogRoutes
+          ),
+      },
     ]
   },
   { path: '**', redirectTo: '' }

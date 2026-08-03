@@ -1,0 +1,250 @@
+<div class="w-full max-w-3xl text-[var(--color-text-primary)]">
+  <h1 class="text-2xl font-semibold">Platform catalog</h1>
+  <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+    Superadmin CRUD for features, plans, permissions and entitlement mappings.
+  </p>
+
+  <div class="mt-6 flex flex-wrap gap-2 text-sm">
+    @for (t of ['features', 'plans', 'permissions', 'mappings']; track t) {
+      <button
+        type="button"
+        class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+        [class.font-semibold]="store.tab() === t"
+        (click)="setTab($any(t))"
+      >
+        {{ t }}
+      </button>
+    }
+  </div>
+
+  @if (store.error(); as err) {
+    <p class="mt-4 text-sm text-red-600 dark:text-red-400">{{ err.message }}</p>
+  }
+  @if (store.message(); as msg) {
+    <p class="mt-4 text-sm text-[var(--color-text-secondary)]">{{ msg }}</p>
+  }
+  @if (store.isLoading()) {
+    <p class="mt-4 text-sm">Loading…</p>
+  }
+
+  @if (store.tab() === 'features') {
+    <section class="mt-6 space-y-4">
+      <h2 class="text-lg font-semibold">Features</h2>
+      <ul class="space-y-2 text-sm">
+        @for (f of store.features(); track f.id) {
+          <li class="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border-default)] py-2">
+            <span><span class="font-mono text-xs">{{ f.code }}</span> — {{ f.name }}</span>
+            <button
+              type="button"
+              class="text-xs text-red-600 dark:text-red-400"
+              [disabled]="store.busy()"
+              (click)="store.deleteFeature(f.id)"
+            >
+              Delete
+            </button>
+          </li>
+        }
+      </ul>
+      <div class="grid gap-2 sm:grid-cols-3">
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="code"
+          [ngModel]="store.draftFeatureCode()"
+          (ngModelChange)="store.draftFeatureCode.set($event)"
+        />
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="name"
+          [ngModel]="store.draftFeatureName()"
+          (ngModelChange)="store.draftFeatureName.set($event)"
+        />
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="description"
+          [ngModel]="store.draftFeatureDescription()"
+          (ngModelChange)="store.draftFeatureDescription.set($event)"
+        />
+      </div>
+      <button
+        type="button"
+        class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+        [disabled]="store.busy()"
+        (click)="store.createFeature()"
+      >
+        Create feature
+      </button>
+    </section>
+  }
+
+  @if (store.tab() === 'plans') {
+    <section class="mt-6 space-y-4">
+      <h2 class="text-lg font-semibold">Plans</h2>
+      <ul class="space-y-2 text-sm">
+        @for (p of store.plans(); track p.id) {
+          <li class="border-b border-[var(--color-border-default)] py-2">
+            <span class="font-medium">{{ p.name }}</span>
+            @if (p.price != null) {
+              <span class="text-[var(--color-text-secondary)]"> — {{ p.price }}</span>
+            }
+            @if (p.description) {
+              <p class="text-xs text-[var(--color-text-secondary)]">{{ p.description }}</p>
+            }
+          </li>
+        }
+      </ul>
+      <div class="grid gap-2 sm:grid-cols-3">
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="name"
+          [ngModel]="store.draftPlanName()"
+          (ngModelChange)="store.draftPlanName.set($event)"
+        />
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="price"
+          [ngModel]="store.draftPlanPrice()"
+          (ngModelChange)="store.draftPlanPrice.set($event)"
+        />
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="description"
+          [ngModel]="store.draftPlanDescription()"
+          (ngModelChange)="store.draftPlanDescription.set($event)"
+        />
+      </div>
+      <button
+        type="button"
+        class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+        [disabled]="store.busy()"
+        (click)="store.createPlan()"
+      >
+        Create plan
+      </button>
+    </section>
+  }
+
+  @if (store.tab() === 'permissions') {
+    <section class="mt-6 space-y-4">
+      <h2 class="text-lg font-semibold">Permissions</h2>
+      <ul class="max-h-80 space-y-1 overflow-y-auto text-sm">
+        @for (p of store.permissions(); track p.id) {
+          <li class="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--color-border-default)] py-1.5">
+            <span><span class="font-mono text-xs">{{ p.code }}</span> — {{ p.name }}</span>
+            <button
+              type="button"
+              class="text-xs text-red-600 dark:text-red-400"
+              [disabled]="store.busy()"
+              (click)="store.deletePermission(p.id)"
+            >
+              Delete
+            </button>
+          </li>
+        }
+      </ul>
+      <div class="grid gap-2 sm:grid-cols-3">
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="code"
+          [ngModel]="store.draftPermCode()"
+          (ngModelChange)="store.draftPermCode.set($event)"
+        />
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="name"
+          [ngModel]="store.draftPermName()"
+          (ngModelChange)="store.draftPermName.set($event)"
+        />
+        <input
+          class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          placeholder="description"
+          [ngModel]="store.draftPermDescription()"
+          (ngModelChange)="store.draftPermDescription.set($event)"
+        />
+      </div>
+      <button
+        type="button"
+        class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+        [disabled]="store.busy()"
+        (click)="store.createPermission()"
+      >
+        Create permission
+      </button>
+    </section>
+  }
+
+  @if (store.tab() === 'mappings') {
+    <section class="mt-6 space-y-8">
+      <div>
+        <h2 class="text-lg font-semibold">Plan → features</h2>
+        <label class="mt-2 block text-sm">Plan</label>
+        <select
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="store.mapPlanId()"
+          (ngModelChange)="onMapPlanChange($event)"
+        >
+          @for (p of store.plans(); track p.id) {
+            <option [value]="p.id">{{ p.name }}</option>
+          }
+        </select>
+        <ul class="mt-3 space-y-2 text-sm">
+          @for (f of store.features(); track f.id) {
+            <li>
+              <label class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  [checked]="store.mapFeatureIds().includes(f.id)"
+                  (change)="store.toggleMapFeature(f.id, $any($event.target).checked)"
+                />
+                {{ f.code }}
+              </label>
+            </li>
+          }
+        </ul>
+        <button
+          type="button"
+          class="mt-3 rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.busy()"
+          (click)="store.savePlanFeatures()"
+        >
+          Save plan features
+        </button>
+      </div>
+
+      <div>
+        <h2 class="text-lg font-semibold">Feature → permissions</h2>
+        <label class="mt-2 block text-sm">Feature</label>
+        <select
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="store.mapFeatureId()"
+          (ngModelChange)="onMapFeatureChange($event)"
+        >
+          @for (f of store.features(); track f.id) {
+            <option [value]="f.id">{{ f.code }}</option>
+          }
+        </select>
+        <ul class="mt-3 max-h-64 space-y-2 overflow-y-auto text-sm">
+          @for (p of store.permissions(); track p.id) {
+            <li>
+              <label class="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  [checked]="store.mapPermissionIds().includes(p.id)"
+                  (change)="store.toggleMapPermission(p.id, $any($event.target).checked)"
+                />
+                <span class="font-mono text-xs">{{ p.code }}</span>
+              </label>
+            </li>
+          }
+        </ul>
+        <button
+          type="button"
+          class="mt-3 rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.busy()"
+          (click)="store.saveFeaturePermissions()"
+        >
+          Save feature permissions
+        </button>
+      </div>
+    </section>
+  }
+</div>

@@ -158,7 +158,8 @@ Legacy mapping: `admin` → `tenant_manager`, `member` → `collaborator`, `gues
 | `has_permission(tenant_id, code)` | Effective access (role ∩ feature + gates) |
 | `change_tenant_plan(tenant_id, plan_id)` | Owner or super_admin |
 | `set_tenant_member_roles(tenant_id, user_id, role_ids[])` | Owner, super_admin, or `tenant.roles.assign` |
-| `is_tenant_owner` / `is_super_admin` / `is_tenant_member` | Helpers |
+| Roles / role_permissions **CRUD** (UI + RLS) | **super_admin only** (owners read + assign; cannot edit role definitions) |
+| Permissions catalog **CRUD** | **super_admin only** |
 
 ---
 
