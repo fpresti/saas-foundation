@@ -112,7 +112,18 @@ Plans **without** `provider_price_id` still use `change_tenant_plan` (entitlemen
 
 ## Next
 
-- **#51** — Settings: status, period, Portal CTA (owner only).
+- ~~**#50** — Stripe checkout + signed webhooks~~ (edge functions + secrets)
+- ~~**#51** — Settings: status, period, Portal CTA~~ (owner only)
+
+## Settings UI (#51)
+
+Owner on `/settings`:
+- Sees plan, status, `current_period_end`, provider
+- Warnings for `past_due` / `canceled`
+- **Save plan**: free/manual → `change_tenant_plan`; plan with `provider_price_id` → Stripe Checkout
+- **Manage billing**: Customer Portal (only if `billing_customer_id` exists)
+
+Non-owners with `settings.read` can view tenant/subscription status but not change plan or open portal.
 
 ## Verify
 

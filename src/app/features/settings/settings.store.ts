@@ -22,6 +22,7 @@ export class SettingsStore {
   readonly plans = signal<PlanOption[]>([]);
   readonly selectedPlanId = signal('');
   readonly planBusy = signal(false);
+  readonly portalBusy = signal(false);
   readonly planError = signal<string | null>(null);
   readonly planMessage = signal<string | null>(null);
   readonly isLoading = signal(false);
@@ -30,6 +31,19 @@ export class SettingsStore {
   readonly isOwner = computed(
     () => this.sessionStore.accessContext()?.tenant_role === 'owner'
   );
+  readonly canOpenPortal = computed(
+    () => this.isOwner() && !!this.subscription()?.billingCustomerId
+  );
+  readonly statusWarning = computed(() => {
+    const status = this.subscription()?.status;
+    if (status === 'past_due') {
+      return 'Payment is past due. Features may be limited for non-owners until billing is fixed.';
+    }
+    if (status === 'canceled') {
+      return 'Subscription is canceled. Features may be limited for non-owners.';
+    }
+    return null;
+  });
 
   constructor() {
     this.appReset.registerResettable('settings', this);
@@ -42,6 +56,7 @@ export class SettingsStore {
     this.selectedPlanId.set('');
     this.planError.set(null);
     this.planMessage.set(null);
+    this.portalBusy.set(false);
     this.error.set(null);
   }
 
@@ -82,10 +97,23 @@ export class SettingsStore {
       return;
     }
 
+    const plan = this.plans().find((p) => p.id === planId);
     this.planBusy.set(true);
     this.planError.set(null);
     this.planMessage.set(null);
     try {
+      if (plan?.providerPriceId) {
+        const origin = globalThis.location?.origin ?? '';
+        const url = await this.settingsService.createCheckoutSession({
+          tenantId,
+          planId,
+          successUrl: `${origin}/settings?checkout=success`,
+          cancelUrl: `${origin}/settings?checkout=cancel`,
+        });
+        globalThis.location.assign(url);
+        return;
+      }
+
       await this.settingsService.changePlan(tenantId, planId);
       this.permission.clearCache();
       const subscription = await this.settingsService.getSubscription(tenantId);
@@ -100,6 +128,36 @@ export class SettingsStore {
       );
     } finally {
       this.planBusy.set(false);
+    }
+  }
+
+  async openBillingPortal(tenantId: string): Promise<void> {
+    if (!this.canOpenPortal()) return;
+    this.portalBusy.set(true);
+    this.planError.set(null);
+    try {
+      const origin = globalThis.location?.origin ?? '';
+      const url = await this.settingsService.createPortalSession({
+        tenantId,
+        returnUrl: `${origin}/settings`,
+      });
+      globalThis.location.assign(url);
+    } catch (e: unknown) {
+      this.planError.set(
+        typeof e === 'object' && e !== null && 'message' in e
+          ? String((e as { message: unknown }).message)
+          : 'Could not open billing portal.'
+      );
+      this.portalBusy.set(false);
+    }
+  }
+
+  formatPeriodEnd(iso: string | null | undefined): string | null {
+    if (!iso) return null;
+    try {
+      return new Date(iso).toLocaleString();
+    } catch {
+      return iso;
     }
   }
 }
