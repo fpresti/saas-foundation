@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json | null
+          processed_at: string
+          provider: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string
+          provider?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string
+          provider?: string
+        }
+        Relationships: []
+      }
       feature_permissions: {
         Row: {
           created_at: string

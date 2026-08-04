@@ -4,3 +4,13 @@ project_id = "ynwlidadbattxknclxyd"
 
 [db]
 major_version = 15
+
+# Stripe signs the body; platform JWT must be off.
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-checkout-session]
+verify_jwt = true
+
+[functions.create-portal-session]
+verify_jwt = true
