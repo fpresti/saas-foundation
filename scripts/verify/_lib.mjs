@@ -12,6 +12,8 @@ export function loadTestEnv() {
   const env = {
     SUPABASE_URL: fromFile.SUPABASE_URL ?? process.env.SUPABASE_URL,
     SUPABASE_ANON_KEY: fromFile.SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY:
+      fromFile.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? null,
     TEST_OWNER_EMAIL: fromFile.TEST_OWNER_EMAIL ?? process.env.TEST_OWNER_EMAIL,
     TEST_OWNER_PASSWORD: fromFile.TEST_OWNER_PASSWORD ?? process.env.TEST_OWNER_PASSWORD,
     TEST_INVITEE_EMAIL: fromFile.TEST_INVITEE_EMAIL ?? process.env.TEST_INVITEE_EMAIL,
@@ -75,6 +77,14 @@ export function defaultTestEnv() {
 
 export function createTestClient(env = loadTestEnv()) {
   return createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY);
+}
+
+/** Service-role client (bypasses RLS). Optional — used for feature-gating teardown asserts. */
+export function createServiceClient(env = loadTestEnv()) {
+  if (!env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  return createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
 }
 
 export async function signIn(client, email, password) {

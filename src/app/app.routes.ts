@@ -5,7 +5,6 @@ import { memberProfileOnboardingGuard } from './core/guards/member-profile-onboa
 import { onboardingGuard } from './core/guards/onboarding.guard';
 import { superAdminGuard } from './core/guards/super-admin.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
-import { tenantOwnerGuard } from './core/guards/tenant-owner.guard';
 import { AppShellPageComponent } from './features/app-shell';
 
 export const routes: Routes = [
@@ -73,14 +72,14 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
-        canActivate: [onboardingGuard, tenantOwnerGuard, permissionGuard],
+        canActivate: [onboardingGuard, permissionGuard],
         data: { permission: 'settings.read' },
         loadChildren: () =>
           import('./features/settings/routes').then(m => m.settingsRoutes),
       },
       {
         path: 'members',
-        canActivate: [onboardingGuard, tenantOwnerGuard, permissionGuard],
+        canActivate: [onboardingGuard, permissionGuard],
         data: { permission: 'members.read' },
         loadComponent: () =>
           import('./features/members/members.component').then(m => m.MembersComponent),

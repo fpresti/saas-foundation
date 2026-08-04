@@ -23,14 +23,12 @@ export class NavigationService {
             icon: 'settings',
             routerLink: '/settings',
             permission: 'settings.read',
-            requiresOwner: true,
           },
           {
             label: 'Members',
             icon: 'users',
             routerLink: '/members',
             permission: 'members.read',
-            requiresOwner: true,
           },
           { label: 'Roles', icon: 'shield', routerLink: '/roles', permission: 'roles.read' },
           {

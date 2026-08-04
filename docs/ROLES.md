@@ -143,12 +143,12 @@ Legacy mapping: `admin` → `tenant_manager`, `member` → `collaborator`, `gues
 | `roles.read` | ✓ | ✓ | — | — |
 | `roles.assign` | ✓ | ✓ | — | — |
 | `roles.permissions_read` | ✓ | ✓ | — | — |
-| `roles.create/update/delete` | ✓ | —* | — | — |
+| `roles.create/update/delete` | —† | — | — | — |
 | `settings.read` | ✓ | ✓ | ✓ | ✓ |
 | `settings.update` | ✓ | ✓ | — | — |
 | `subscription.read` | ✓ | ✓ | ✓ | — |
 
-\*Owner-only by seed; can be granted via custom roles later (V15).
+†Role/permission **definition** CRUD is **super_admin only** (RLS). Owners and `tenant_manager` can **assign** existing roles (`roles.assign`), not edit the catalog.
 
 ---
 
@@ -168,9 +168,10 @@ Legacy mapping: `admin` → `tenant_manager`, `member` → `collaborator`, `gues
 
 | Feature folder | Permission gate |
 |----------------|-----------------|
-| `features/members` | `members.read` |
-| `features/roles` | `roles.read` |
-| `features/settings` | `settings.read` |
+| `features/members` | `members.read` (any member with permission; not owner-only) |
+| `features/roles` | `roles.read` (tabs Roles&Permissions / Permissions: super_admin) |
+| `features/settings` | `settings.read` (plan change UI: owner only) |
+| `features/features-plans` | super_admin |
 | `features/profile` | auth (+ `profile.*` when gated) |
 
 When adding a product capability:
@@ -183,6 +184,18 @@ When adding a product capability:
 
 ---
 
-## 7) Related issues
+## 7) Verify / tests
+
+```bash
+npm run verify:authz-gates   # has_permission matrix + change_tenant_plan + catalog write deny
+npm run verify:all           # full smoke (db-sync, setup, authz, invitations, …)
+npm test                     # Angular unit (PermissionService, members.permissions, …)
+```
+
+Optional: set `SUPABASE_SERVICE_ROLE_KEY` in `.env.test.local` so `verify:authz-gates` also asserts **role permission ∩ missing plan feature → deny** (temporarily unlinks `members` from the tenant plan).
+
+---
+
+## 8) Related issues
 
 Epic: **#34** Planes + Features + RBAC. Phase 2 billing: #49–#51.

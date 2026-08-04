@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { createTestClient, loadTestEnv, signIn, ok, fail } from './_lib.mjs';
 
+const EXPECTED = ['tenant_manager', 'collaborator', 'viewer'];
+
 async function main() {
   const env = loadTestEnv();
   const client = createTestClient(env);
@@ -14,9 +16,11 @@ async function main() {
     .select('id, code')
     .eq('tenant_id', tenantId);
   if (error) fail(error.message);
-  const count = roles?.length ?? 0;
-  if (count < 3) fail(`expected at least 3 default roles, got ${count}`);
-  ok(`roles query returned ${count} rows (admin, member, guest)`);
+  const codes = new Set((roles ?? []).map((r) => r.code));
+  for (const code of EXPECTED) {
+    if (!codes.has(code)) fail(`missing system role ${code} (have: ${[...codes].join(',')})`);
+  }
+  ok(`roles query returned system roles: ${EXPECTED.join(', ')}`);
   console.log('verify:roles-read passed');
 }
 
