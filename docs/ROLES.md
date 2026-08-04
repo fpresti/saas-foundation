@@ -82,7 +82,7 @@ flowchart TB
 
 - Row in `public.super_admins`.
 - Only actors who can CRUD global **features**, **plans**, **permissions** (and joins).
-- Reference codes: `platform.features.*`, `platform.plans.*`, `platform.permissions.*` — **not** granted via tenant roles.
+- Reference codes: `platform.features_read`, `platform.features_write`, `platform.plans_*`, `platform.permissions_*`, `platform.tenants_*` — **not** granted via tenant roles.
 
 ### 2.2 `owner` (`member_type`)
 
@@ -100,20 +100,21 @@ flowchart TB
 
 ## 3) Features & permission codes
 
-Permissions are named `{scope}.{feature}.{action}`.
+Permissions are named `{feature}.{action}` and each row has `permissions.feature_id` → `features.id`. Feature gating uses that FK ∩ `plan_features` (not only the legacy `feature_permissions` join).
 
 | Feature code | Enables permission codes |
 |--------------|--------------------------|
-| `profile` | `profile.self.read`, `profile.self.update` |
-| `members` | `tenant.members.read`, `.invite`, `.update`, `.delete` |
-| `roles` | `tenant.roles.read`, `.assign`, `.create`, `.update`, `.delete`, `tenant.permissions.read` |
-| `settings` | `tenant.settings.read`, `.update` |
+| `profile` | `profile.read`, `profile.update` |
+| `members` | `members.read`, `members.invite`, `members.update`, `members.delete` |
+| `roles` | `roles.read`, `roles.assign`, `roles.create`, `roles.update`, `roles.delete`, `roles.permissions_read` |
+| `settings` | `settings.read`, `settings.update` |
 | `subscription` | `subscription.read` |
+| `platform` | `platform.features_read`, `platform.features_write`, `platform.plans_*`, `platform.permissions_*`, `platform.tenants_*` |
 
-Tables: `features`, `plan_features`, `feature_permissions`.  
-Phase 1: plans `free`, `premium`, `enterprise` all include the five features above (differentiation later).
+Tables: `features`, `plan_features`, `permissions` (`feature_id`), `feature_permissions` (kept in sync from `feature_id`).  
+Phase 1: plans `free`, `premium`, `enterprise` all include the product features above (differentiation later).
 
-Catalog seed: `supabase/migrations/20250315000000_seed_members_permissions.sql` + entitlement migration.
+Catalog seed: `supabase/migrations/20250315000000_seed_members_permissions.sql` + entitlement / rename migrations.
 
 ---
 
@@ -133,18 +134,18 @@ Legacy mapping: `admin` → `tenant_manager`, `member` → `collaborator`, `gues
 
 | Permission | owner | tenant_manager | collaborator | viewer |
 |------------|:-----:|:--------------:|:------------:|:------:|
-| `profile.self.read` | ✓ | ✓ | ✓ | ✓ |
-| `profile.self.update` | ✓ | ✓ | ✓ | ✓ |
-| `tenant.members.read` | ✓ | ✓ | ✓ | — |
-| `tenant.members.invite` | ✓ | ✓ | — | — |
-| `tenant.members.update` | ✓ | ✓ | — | — |
-| `tenant.members.delete` | ✓ | ✓ | — | — |
-| `tenant.roles.read` | ✓ | ✓ | — | — |
-| `tenant.roles.assign` | ✓ | ✓ | — | — |
-| `tenant.permissions.read` | ✓ | ✓ | — | — |
-| `tenant.roles.create/update/delete` | ✓ | —* | — | — |
-| `tenant.settings.read` | ✓ | ✓ | ✓ | ✓ |
-| `tenant.settings.update` | ✓ | ✓ | — | — |
+| `profile.read` | ✓ | ✓ | ✓ | ✓ |
+| `profile.update` | ✓ | ✓ | ✓ | ✓ |
+| `members.read` | ✓ | ✓ | ✓ | — |
+| `members.invite` | ✓ | ✓ | — | — |
+| `members.update` | ✓ | ✓ | — | — |
+| `members.delete` | ✓ | ✓ | — | — |
+| `roles.read` | ✓ | ✓ | — | — |
+| `roles.assign` | ✓ | ✓ | — | — |
+| `roles.permissions_read` | ✓ | ✓ | — | — |
+| `roles.create/update/delete` | ✓ | —* | — | — |
+| `settings.read` | ✓ | ✓ | ✓ | ✓ |
+| `settings.update` | ✓ | ✓ | — | — |
 | `subscription.read` | ✓ | ✓ | ✓ | — |
 
 \*Owner-only by seed; can be granted via custom roles later (V15).
@@ -155,9 +156,9 @@ Legacy mapping: `admin` → `tenant_manager`, `member` → `collaborator`, `gues
 
 | RPC | Who |
 |-----|-----|
-| `has_permission(tenant_id, code)` | Effective access (role ∩ feature + gates) |
+| `has_permission(tenant_id, code)` | Effective access (role ∩ feature via `permissions.feature_id` + gates) |
 | `change_tenant_plan(tenant_id, plan_id)` | Owner or super_admin |
-| `set_tenant_member_roles(tenant_id, user_id, role_ids[])` | Owner, super_admin, or `tenant.roles.assign` |
+| `set_tenant_member_roles(tenant_id, user_id, role_ids[])` | Owner, super_admin, or `roles.assign` |
 | Roles / role_permissions **CRUD** (UI + RLS) | **super_admin only** (owners read + assign; cannot edit role definitions) |
 | Permissions catalog **CRUD** | **super_admin only** |
 
@@ -167,14 +168,14 @@ Legacy mapping: `admin` → `tenant_manager`, `member` → `collaborator`, `gues
 
 | Feature folder | Permission gate |
 |----------------|-----------------|
-| `features/members` | `tenant.members.read` |
-| `features/roles` | `tenant.roles.read` |
-| `features/settings` | `tenant.settings.read` |
-| `features/profile` | auth (+ `profile.self.*` when gated) |
+| `features/members` | `members.read` |
+| `features/roles` | `roles.read` |
+| `features/settings` | `settings.read` |
+| `features/profile` | auth (+ `profile.*` when gated) |
 
 When adding a product capability:
 
-1. Add `permissions` rows + link via `feature_permissions` to a `features` row.
+1. Add `permissions` rows with `feature_id` set to the owning `features` row (and keep `feature_permissions` in sync if still used).
 2. Attach feature to plans in `plan_features`.
 3. Assign to default roles in `seed_default_tenant_roles` if needed.
 4. Guard route / nav with `data.permission`.

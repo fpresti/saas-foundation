@@ -41,6 +41,7 @@ export class RolesComponent {
 
   readonly permissionColumns: DataTableColumn<PermissionTableRow>[] = [
     { key: 'code', header: 'Code' },
+    { key: 'feature', header: 'Feature' },
     { key: 'name', header: 'Name' },
     { key: 'description', header: 'Description', hideOnMobile: true },
   ];

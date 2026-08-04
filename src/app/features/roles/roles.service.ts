@@ -1,26 +1,48 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../core/supabase/supabase.service';
 import { normalizeError } from '../../core/utils/supabase-error.util';
-import type { PermissionCatalogItem, TenantRoleItem } from './types';
+import type { FeatureOption, PermissionCatalogItem, TenantRoleItem } from './types';
 
 @Injectable({ providedIn: 'root' })
 export class RolesService {
   private readonly supabase = inject(SupabaseService).client;
 
+  async listFeatures(): Promise<FeatureOption[]> {
+    const { data, error } = await this.supabase
+      .from('features')
+      .select('id, code, name')
+      .order('code');
+    const n = normalizeError(error);
+    if (n) throw n;
+    return (data ?? []).map((f) => ({
+      id: f.id,
+      code: f.code,
+      name: f.name,
+    }));
+  }
+
   async listPermissions(): Promise<PermissionCatalogItem[]> {
     const { data, error } = await this.supabase
       .from('permissions')
-      .select('id, code, name, description')
+      .select(
+        'id, code, name, description, feature_id, features!permissions_feature_id_fkey(code, name)'
+      )
       .order('code');
 
     const n = normalizeError(error);
     if (n) throw n;
-    return (data ?? []).map((p) => ({
-      id: p.id,
-      code: p.code,
-      name: p.name,
-      description: p.description,
-    }));
+    return (data ?? []).map((p) => {
+      const feat = p.features as { code: string; name: string } | null;
+      return {
+        id: p.id,
+        code: p.code,
+        name: p.name,
+        description: p.description,
+        featureId: p.feature_id,
+        featureCode: feat?.code ?? null,
+        featureName: feat?.name ?? null,
+      };
+    });
   }
 
   async listForTenant(tenantId: string): Promise<TenantRoleItem[]> {
@@ -150,11 +172,13 @@ export class RolesService {
     code: string;
     name: string;
     description: string | null;
+    featureId: string;
   }): Promise<void> {
     const { error } = await this.supabase.from('permissions').insert({
       code: input.code.trim(),
       name: input.name.trim(),
       description: input.description,
+      feature_id: input.featureId,
     });
     const n = normalizeError(error);
     if (n) throw n;
@@ -165,6 +189,7 @@ export class RolesService {
     code: string;
     name: string;
     description: string | null;
+    featureId: string;
   }): Promise<void> {
     const { error } = await this.supabase
       .from('permissions')
@@ -172,6 +197,7 @@ export class RolesService {
         code: input.code.trim(),
         name: input.name.trim(),
         description: input.description,
+        feature_id: input.featureId,
         updated_at: new Date().toISOString(),
       })
       .eq('id', input.id);

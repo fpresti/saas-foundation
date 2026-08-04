@@ -4,9 +4,9 @@
  */
 export const MEMBERS_PERMISSION = {
   /** View members list (route already uses this). */
-  read: 'tenant.members.read',
+  read: 'members.read',
   /** Create invitation RPC. */
-  invite: 'tenant.members.invite',
+  invite: 'members.invite',
   /** Assign roles via `set_tenant_member_roles`. */
-  manageRoles: 'tenant.roles.assign',
+  manageRoles: 'roles.assign',
 } as const;

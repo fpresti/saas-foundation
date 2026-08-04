@@ -18,7 +18,7 @@
         [disabled]="!store.canInvite()"
         (click)="openInvite()"
         class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-        [title]="store.canInvite() ? 'Send invitation' : 'Requires tenant.members.invite'"
+        [title]="store.canInvite() ? 'Send invitation' : 'Requires members.invite'"
       >
         Invite member
       </button>

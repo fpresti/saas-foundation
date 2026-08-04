@@ -11,6 +11,7 @@ export type NavIcon =
   | 'users'
   | 'building'
   | 'shield'
+  | 'circuit-board'
   | 'menu'
   | 'chevron-left'
   | 'chevron-right';

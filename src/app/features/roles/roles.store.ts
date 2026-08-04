@@ -4,6 +4,7 @@ import { AppResetService } from '../../core/services/app-reset.service';
 import type { NormalizedError } from '../../core/utils/supabase-error.util';
 import { RolesService } from './roles.service';
 import type {
+  FeatureOption,
   PermissionCatalogItem,
   PermissionTableRow,
   RoleTableRow,
@@ -20,6 +21,7 @@ export class RolesStore {
   readonly tab = signal<RolesTab>('roles');
   readonly state = signal<TenantRoleItem[]>([]);
   readonly permissions = signal<PermissionCatalogItem[]>([]);
+  readonly features = signal<FeatureOption[]>([]);
   readonly isLoading = signal(false);
   readonly busy = signal(false);
   readonly error = signal<NormalizedError | null>(null);
@@ -45,7 +47,9 @@ export class RolesStore {
       id: p.id,
       code: p.code,
       name: p.name,
+      feature: p.featureCode ?? '—',
       description: p.description?.trim() || '—',
+      featureId: p.featureId,
     }))
   );
 
@@ -69,10 +73,18 @@ export class RolesStore {
   readonly permEditorOpen = signal(false);
   readonly permEditorMode = signal<'create' | 'edit'>('create');
   readonly permEditorId = signal<string | null>(null);
-  readonly permEditorCode = signal('');
+  readonly permEditorFeatureId = signal('');
+  readonly permEditorAction = signal('');
   readonly permEditorName = signal('');
   readonly permEditorDescription = signal('');
   readonly permEditorError = signal<string | null>(null);
+
+  readonly permEditorCodePreview = computed(() => {
+    const feature = this.features().find((f) => f.id === this.permEditorFeatureId());
+    const action = this.permEditorAction().trim();
+    if (!feature || !action) return '';
+    return `${feature.code}.${action}`;
+  });
 
   constructor() {
     this.appReset.registerResettable('roles', this);
@@ -81,6 +93,7 @@ export class RolesStore {
   reset(): void {
     this.state.set([]);
     this.permissions.set([]);
+    this.features.set([]);
     this.error.set(null);
     this.message.set(null);
     this.tab.set('roles');
@@ -102,14 +115,18 @@ export class RolesStore {
     this.error.set(null);
     try {
       const sa = this.isSuperAdmin();
-      const [roles, perms] = await Promise.all([
+      const [roles, perms, features] = await Promise.all([
         this.rolesService.listForTenant(tenantId),
         sa
           ? this.rolesService.listPermissions()
           : Promise.resolve([] as PermissionCatalogItem[]),
+        sa
+          ? this.rolesService.listFeatures()
+          : Promise.resolve([] as FeatureOption[]),
       ]);
       this.state.set(roles);
       this.permissions.set(perms);
+      this.features.set(features);
       if (!sa && this.tab() !== 'roles') {
         this.tab.set('roles');
       }
@@ -117,6 +134,7 @@ export class RolesStore {
       this.error.set(asError(e, 'Could not load roles.'));
       this.state.set([]);
       this.permissions.set([]);
+      this.features.set([]);
     } finally {
       this.isLoading.set(false);
     }
@@ -251,7 +269,8 @@ export class RolesStore {
   openCreatePermission(): void {
     this.permEditorMode.set('create');
     this.permEditorId.set(null);
-    this.permEditorCode.set('');
+    this.permEditorFeatureId.set(this.features()[0]?.id ?? '');
+    this.permEditorAction.set('');
     this.permEditorName.set('');
     this.permEditorDescription.set('');
     this.permEditorError.set(null);
@@ -263,7 +282,15 @@ export class RolesStore {
     if (!p) return;
     this.permEditorMode.set('edit');
     this.permEditorId.set(p.id);
-    this.permEditorCode.set(p.code);
+    this.permEditorFeatureId.set(p.featureId ?? '');
+    const featureCode = p.featureCode ?? '';
+    const action =
+      featureCode && p.code.startsWith(`${featureCode}.`)
+        ? p.code.slice(featureCode.length + 1)
+        : p.code.includes('.')
+          ? p.code.split('.').slice(1).join('.')
+          : p.code;
+    this.permEditorAction.set(action);
     this.permEditorName.set(p.name);
     this.permEditorDescription.set(p.description ?? '');
     this.permEditorError.set(null);
@@ -278,10 +305,18 @@ export class RolesStore {
 
   async savePermission(tenantId: string): Promise<void> {
     if (!this.isSuperAdmin()) return;
-    const code = this.permEditorCode().trim();
+    const featureId = this.permEditorFeatureId();
+    const action = this.permEditorAction().trim();
     const name = this.permEditorName().trim();
-    if (!code || !name) {
-      this.permEditorError.set('Code and name are required.');
+    const code = this.permEditorCodePreview();
+    if (!featureId || !action || !name || !code) {
+      this.permEditorError.set('Feature, action and name are required.');
+      return;
+    }
+    if (!/^[a-z][a-z0-9_]*$/.test(action)) {
+      this.permEditorError.set(
+        'Action must be lowercase letters, digits or underscore (e.g. read, permissions_read).'
+      );
       return;
     }
     this.busy.set(true);
@@ -292,6 +327,7 @@ export class RolesStore {
           code,
           name,
           description: this.permEditorDescription().trim() || null,
+          featureId,
         });
       } else {
         const id = this.permEditorId();
@@ -301,6 +337,7 @@ export class RolesStore {
           code,
           name,
           description: this.permEditorDescription().trim() || null,
+          featureId,
         });
       }
       this.closePermEditor();

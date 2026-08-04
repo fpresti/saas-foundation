@@ -74,14 +74,14 @@ export const routes: Routes = [
       {
         path: 'settings',
         canActivate: [onboardingGuard, tenantOwnerGuard, permissionGuard],
-        data: { permission: 'tenant.settings.read' },
+        data: { permission: 'settings.read' },
         loadChildren: () =>
           import('./features/settings/routes').then(m => m.settingsRoutes),
       },
       {
         path: 'members',
         canActivate: [onboardingGuard, tenantOwnerGuard, permissionGuard],
-        data: { permission: 'tenant.members.read' },
+        data: { permission: 'members.read' },
         loadComponent: () =>
           import('./features/members/members.component').then(m => m.MembersComponent),
       },
@@ -93,17 +93,22 @@ export const routes: Routes = [
       {
         path: 'roles',
         canActivate: [onboardingGuard, permissionGuard],
-        data: { permission: 'tenant.roles.read' },
+        data: { permission: 'roles.read' },
         loadChildren: () =>
           import('./features/roles/routes').then(m => m.rolesRoutes),
       },
       {
-        path: 'platform',
+        path: 'features-plans',
         canActivate: [onboardingGuard, superAdminGuard],
         loadChildren: () =>
-          import('./features/platform-catalog/routes').then(
-            (m) => m.platformCatalogRoutes
+          import('./features/features-plans/routes').then(
+            (m) => m.featuresPlansRoutes
           ),
+      },
+      {
+        path: 'platform',
+        redirectTo: 'features-plans',
+        pathMatch: 'full',
       },
     ]
   },

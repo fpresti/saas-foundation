@@ -129,6 +129,7 @@ export type Database = {
           code: string
           created_at: string
           description: string | null
+          feature_id: string | null
           id: string
           name: string
           updated_at: string
@@ -137,6 +138,7 @@ export type Database = {
           code: string
           created_at?: string
           description?: string | null
+          feature_id?: string | null
           id?: string
           name: string
           updated_at?: string
@@ -145,11 +147,20 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string | null
+          feature_id?: string | null
           id?: string
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "permissions_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "features"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plan_features: {
         Row: {
