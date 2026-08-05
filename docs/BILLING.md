@@ -93,7 +93,7 @@ stripe trigger checkout.session.completed
    - Valid event → row in `billing_webhook_events`; subscription/invoice updated when metadata/`cus_` matches a tenant
 7. For a real checkout: set `plans.provider_price_id` for `premium`, invoke `create-checkout-session` as owner with `successUrl`/`cancelUrl`.
 
-### App usage (no UI yet — #51)
+### App usage
 
 ```ts
 await supabase.functions.invoke('create-checkout-session', {
@@ -104,7 +104,10 @@ await supabase.functions.invoke('create-portal-session', {
 });
 ```
 
+Super_admin sets `plans.provider_price_id` in **Features & Plans** (plan editor).  
 Plans **without** `provider_price_id` still use `change_tenant_plan` (entitlement-only).
+
+Full manual checklist: [`docs/TEST_CHECKLIST.md`](./TEST_CHECKLIST.md).
 
 ## Entitlement interaction
 

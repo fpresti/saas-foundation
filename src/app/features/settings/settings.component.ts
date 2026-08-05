@@ -42,4 +42,10 @@ export class SettingsComponent {
     if (!tenantId) return;
     void this.store.openBillingPortal(tenantId);
   }
+
+  setupBilling(): void {
+    const tenantId = this.session.activeTenantId();
+    if (!tenantId) return;
+    void this.store.setupBilling(tenantId);
+  }
 }

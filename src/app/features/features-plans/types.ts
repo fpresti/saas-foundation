@@ -10,6 +10,7 @@ export type PlanCatalogItem = {
   name: string;
   description: string | null;
   price: number | null;
+  providerPriceId: string | null;
   featureIds: string[];
   featureCodes: string[];
 };
@@ -20,6 +21,7 @@ export type PlanTableRow = {
   id: string;
   name: string;
   priceLabel: string;
+  stripePriceLabel: string;
   description: string;
 } & Record<string, unknown>;
 

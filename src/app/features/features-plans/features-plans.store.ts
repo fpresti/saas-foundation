@@ -33,6 +33,7 @@ export class FeaturesPlansStore {
       id: p.id,
       name: p.name,
       priceLabel: formatPrice(p.price),
+      stripePriceLabel: p.providerPriceId?.trim() || '—',
       description: p.description?.trim() || '—',
     }))
   );
@@ -62,6 +63,7 @@ export class FeaturesPlansStore {
   readonly planEditorName = signal('');
   readonly planEditorPrice = signal('');
   readonly planEditorDescription = signal('');
+  readonly planEditorProviderPriceId = signal('');
   readonly planEditorError = signal<string | null>(null);
 
   /** Plan↔features editor */
@@ -124,6 +126,7 @@ export class FeaturesPlansStore {
     this.planEditorName.set('');
     this.planEditorPrice.set('');
     this.planEditorDescription.set('');
+    this.planEditorProviderPriceId.set('');
     this.planEditorError.set(null);
     this.planEditorOpen.set(true);
   }
@@ -136,6 +139,7 @@ export class FeaturesPlansStore {
     this.planEditorName.set(plan.name);
     this.planEditorPrice.set(plan.price != null ? String(plan.price) : '');
     this.planEditorDescription.set(plan.description ?? '');
+    this.planEditorProviderPriceId.set(plan.providerPriceId ?? '');
     this.planEditorError.set(null);
     this.planEditorOpen.set(true);
   }
@@ -159,6 +163,7 @@ export class FeaturesPlansStore {
       this.planEditorError.set('Invalid price.');
       return;
     }
+    const providerPriceId = this.planEditorProviderPriceId().trim() || null;
     this.busy.set(true);
     this.planEditorError.set(null);
     try {
@@ -167,6 +172,7 @@ export class FeaturesPlansStore {
           name,
           description: this.planEditorDescription().trim() || null,
           price,
+          providerPriceId,
         });
       } else {
         const id = this.planEditorId();
@@ -176,6 +182,7 @@ export class FeaturesPlansStore {
           name,
           description: this.planEditorDescription().trim() || null,
           price,
+          providerPriceId,
         });
       }
       this.closePlanEditor();

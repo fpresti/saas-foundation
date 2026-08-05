@@ -26,7 +26,7 @@ export class FeaturesPlansService {
   async listPlans(): Promise<PlanCatalogItem[]> {
     const { data: plans, error: plansErr } = await this.supabase
       .from('plans')
-      .select('id, name, description, price')
+      .select('id, name, description, price, provider_price_id')
       .order('name');
 
     const n1 = normalizeError(plansErr);
@@ -77,6 +77,7 @@ export class FeaturesPlansService {
       name: p.name,
       description: p.description,
       price: p.price,
+      providerPriceId: p.provider_price_id,
       featureIds: [...(idsByPlan.get(p.id) ?? [])],
       featureCodes: [...(codesByPlan.get(p.id) ?? [])].sort(),
     }));
@@ -135,11 +136,13 @@ export class FeaturesPlansService {
     name: string;
     description: string | null;
     price: number | null;
+    providerPriceId: string | null;
   }): Promise<void> {
     const { error } = await this.supabase.from('plans').insert({
       name: input.name.trim(),
       description: input.description,
       price: input.price,
+      provider_price_id: input.providerPriceId,
     });
     const n = normalizeError(error);
     if (n) throw n;
@@ -150,6 +153,7 @@ export class FeaturesPlansService {
     name: string;
     description: string | null;
     price: number | null;
+    providerPriceId: string | null;
   }): Promise<void> {
     const { error } = await this.supabase
       .from('plans')
@@ -157,6 +161,7 @@ export class FeaturesPlansService {
         name: input.name.trim(),
         description: input.description,
         price: input.price,
+        provider_price_id: input.providerPriceId,
         updated_at: new Date().toISOString(),
       })
       .eq('id', input.id);
