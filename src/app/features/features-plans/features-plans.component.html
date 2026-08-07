@@ -142,6 +142,16 @@
         [ngModel]="store.planEditorDescription()"
         (ngModelChange)="store.planEditorDescription.set($event)"
       />
+      <label class="mt-3 block text-sm font-medium">Stripe price id</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm font-mono"
+        placeholder="price_… (leave blank for free/manual)"
+        [ngModel]="store.planEditorProviderPriceId()"
+        (ngModelChange)="store.planEditorProviderPriceId.set($event)"
+      />
+      <p class="mt-1 text-xs text-[var(--color-text-secondary)]">
+        From Stripe → Product → Price. Required for Checkout.
+      </p>
       @if (store.planEditorError(); as pe) {
         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ pe }}</p>
       }
