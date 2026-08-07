@@ -10,6 +10,7 @@ export class NavigationService {
         label: 'Principal',
         items: [
           { label: 'Home', icon: 'home', routerLink: '/', exact: true },
+          { label: 'Profile', icon: 'user', routerLink: '/profile' },
           { label: 'Switch tenant', icon: 'building', routerLink: '/select-tenant' },
         ],
       },
@@ -17,9 +18,25 @@ export class NavigationService {
         id: 'settings',
         label: 'Configuración',
         items: [
-          { label: 'Settings', icon: 'settings', routerLink: '/settings', permission: 'tenant.settings.read' },
-          { label: 'Members', icon: 'users', routerLink: '/members', permission: 'tenant.members.read' },
-          { label: 'Roles', icon: 'shield', routerLink: '/roles', permission: 'tenant.roles.read' },
+          {
+            label: 'Settings',
+            icon: 'settings',
+            routerLink: '/settings',
+            permission: 'settings.read',
+          },
+          {
+            label: 'Members',
+            icon: 'users',
+            routerLink: '/members',
+            permission: 'members.read',
+          },
+          { label: 'Roles', icon: 'shield', routerLink: '/roles', permission: 'roles.read' },
+          {
+            label: 'Features & Plans',
+            icon: 'circuit-board',
+            routerLink: '/features-plans',
+            requiresSuperAdmin: true,
+          },
         ],
       },
     ];

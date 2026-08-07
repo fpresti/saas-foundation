@@ -43,36 +43,36 @@ describe('PermissionService', () => {
 
   it('returns false when not authenticated', async () => {
     sessionStub.isAuthenticated.set(false);
-    expect(await service.hasPermission('tenant.members.read')).toBe(false);
+    expect(await service.hasPermission('members.read')).toBe(false);
     expect(hasPermissionRpc).not.toHaveBeenCalled();
   });
 
   it('returns false when no active tenant', async () => {
     sessionStub.activeTenantId.set(null);
-    expect(await service.hasPermission('tenant.members.read')).toBe(false);
+    expect(await service.hasPermission('members.read')).toBe(false);
     expect(hasPermissionRpc).not.toHaveBeenCalled();
   });
 
   it('delegates to access context and caches result', async () => {
     hasPermissionRpc.mockResolvedValue(true);
 
-    expect(await service.hasPermission('tenant.members.read')).toBe(true);
-    expect(await service.hasPermission('tenant.members.read')).toBe(true);
+    expect(await service.hasPermission('members.read')).toBe(true);
+    expect(await service.hasPermission('members.read')).toBe(true);
     expect(hasPermissionRpc).toHaveBeenCalledTimes(1);
-    expect(hasPermissionRpc).toHaveBeenCalledWith('tenant-1', 'tenant.members.read');
+    expect(hasPermissionRpc).toHaveBeenCalledWith('tenant-1', 'members.read');
   });
 
   it('returns false on RPC error', async () => {
     hasPermissionRpc.mockRejectedValue(new Error('rpc failed'));
-    expect(await service.hasPermission('tenant.members.read')).toBe(false);
+    expect(await service.hasPermission('members.read')).toBe(false);
   });
 
   it('clearCache forces a fresh RPC call', async () => {
     hasPermissionRpc.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
 
-    expect(await service.hasPermission('tenant.members.read')).toBe(true);
+    expect(await service.hasPermission('members.read')).toBe(true);
     service.clearCache();
-    expect(await service.hasPermission('tenant.members.read')).toBe(false);
+    expect(await service.hasPermission('members.read')).toBe(false);
     expect(hasPermissionRpc).toHaveBeenCalledTimes(2);
   });
 });

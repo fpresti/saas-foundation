@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-5xl text-[var(--color-text-primary)]">
+<div class="w-full max-w-5xl text-[var(--color-text-primary)]">
   <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <div>
       <h1 class="text-2xl font-semibold tracking-tight">Members</h1>
@@ -18,7 +18,7 @@
         [disabled]="!store.canInvite()"
         (click)="openInvite()"
         class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-        [title]="store.canInvite() ? 'Send invitation' : 'Requires tenant.members.invite'"
+        [title]="store.canInvite() ? 'Send invitation' : 'Requires members.invite'"
       >
         Invite member
       </button>
@@ -60,13 +60,48 @@
     @if (store.pendingInvitations().length > 0) {
       <section class="mt-8">
         <h2 class="mb-3 text-lg font-semibold">Pending invitations</h2>
-        <ul class="divide-y divide-[var(--color-border-default)] rounded border border-[var(--color-border-default)]">
+        @if (store.pendingInvitationMessage(); as msg) {
+          <p class="mb-3 text-sm text-[var(--color-text-secondary)]" role="status">{{ msg }}</p>
+        }
+        <ul class="surface-panel divide-y divide-[var(--color-border-default)]">
           @for (inv of store.pendingInvitations(); track inv.id) {
-            <li class="flex flex-col gap-1 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-              <span>{{ inv.email }}</span>
-              <span class="text-[var(--color-text-secondary)]">
-                {{ inv.memberType }} · expires {{ inv.expiresAt | date : 'medium' }}
-              </span>
+            <li
+              class="flex flex-col gap-3 px-4 py-3 text-sm transition-colors hover:bg-[var(--color-bg-primary)] sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div class="min-w-0">
+                <span class="font-medium">{{ inv.email }}</span>
+                <span class="mt-0.5 block text-[var(--color-text-secondary)] sm:mt-0 sm:inline sm:before:content-['·_']">
+                  expires {{ inv.expiresAt | date : 'medium' }}
+                </span>
+              </div>
+              @if (store.canInvite()) {
+                <div class="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    [disabled]="!!store.pendingInvitationBusy()[inv.id]"
+                    (click)="resendInvitation(inv.id)"
+                    class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm disabled:opacity-50"
+                  >
+                    @if (store.pendingInvitationBusy()[inv.id] === 'resend') {
+                      Sending…
+                    } @else {
+                      Re-send
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="!!store.pendingInvitationBusy()[inv.id]"
+                    (click)="deleteInvitation(inv.id)"
+                    class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm text-red-600 disabled:opacity-50 dark:text-red-400"
+                  >
+                    @if (store.pendingInvitationBusy()[inv.id] === 'delete') {
+                      Deleting…
+                    } @else {
+                      Delete
+                    }
+                  </button>
+                </div>
+              }
             </li>
           }
         </ul>
@@ -88,19 +123,9 @@
       <h2 id="invite-title" class="text-lg font-semibold">Invite member</h2>
       @if (store.inviteResult(); as r) {
         <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
-          Invitation created. Share this link token (expires {{ r.expiresAt | date : 'medium' }}):
+          Invitation email sent to <strong>{{ r.email }}</strong> (expires
+          {{ r.expiresAt | date : 'medium' }}).
         </p>
-        <pre
-          class="mt-2 max-h-24 overflow-auto rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-2 text-xs break-all"
-          >{{ r.token }}</pre
-        >
-        <button
-          type="button"
-          (click)="copyToken()"
-          class="mt-2 text-sm underline"
-        >
-          Copy token
-        </button>
         <div class="mt-4 flex justify-end gap-2">
           <button
             type="button"
@@ -111,6 +136,9 @@
           </button>
         </div>
       } @else {
+        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+          An email with an invitation link will be sent to the address below.
+        </p>
         <label class="mt-3 block text-sm font-medium">Email</label>
         <input
           type="email"
@@ -119,15 +147,6 @@
           (ngModelChange)="store.inviteEmail.set($event)"
           placeholder="colleague@example.com"
         />
-        <label class="mt-3 block text-sm font-medium">Member type</label>
-        <select
-          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
-          [ngModel]="store.inviteMemberType()"
-          (ngModelChange)="store.inviteMemberType.set($event)"
-        >
-          <option value="member">Member</option>
-          <option value="owner">Owner</option>
-        </select>
         @if (store.inviteError(); as ie) {
           <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ ie }}</p>
         }
@@ -160,28 +179,124 @@
     aria-modal="true"
   >
     <div
-      class="w-full max-w-md rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 shadow-xl"
+      class="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 shadow-xl"
     >
-      <h2 class="text-lg font-semibold">Assign role</h2>
+      <h2 class="text-lg font-semibold">Manage member</h2>
       <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
         {{ store.manageUserLabel() }}
+        @if (store.manageEmail()) {
+          <span class="block">{{ store.manageEmail() }}</span>
+        }
       </p>
-      @if (store.manageBusy() && !store.tenantRoles().length) {
-        <p class="mt-4 text-sm text-[var(--color-text-secondary)]">Loading roles…</p>
-      } @else if (store.tenantRoles().length === 0 && !store.manageBusy()) {
-        <p class="mt-4 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
-      } @else {
-        <label class="mt-3 block text-sm font-medium">Role</label>
+
+      @if (store.canManageMembers()) {
+        <div class="mt-4 flex items-center gap-4">
+          <app-user-avatar
+            [src]="store.manageAvatarPreviewUrl() ?? store.manageAvatarUrl()"
+            [initials]="(store.manageGivenName().trim().charAt(0) || '?').toUpperCase()"
+            size="md"
+          />
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium">Foto de perfil</p>
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+              JPEG, PNG o WebP · se aplica al guardar
+            </p>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <label
+                for="manage-avatar"
+                class="cursor-pointer rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm hover:bg-[var(--color-bg-primary)]"
+              >
+                Elegir imagen
+              </label>
+              <input
+                #manageAvatarInput
+                id="manage-avatar"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="sr-only"
+                (change)="onManageAvatarSelected($event)"
+              />
+              @if (store.manageAvatarFile()) {
+                <button
+                  type="button"
+                  class="rounded px-2 py-1.5 text-sm text-[var(--color-text-secondary)] underline"
+                  (click)="clearManageAvatar(manageAvatarInput)"
+                >
+                  Quitar
+                </button>
+              }
+            </div>
+            @if (store.manageAvatarFile(); as file) {
+              <p class="mt-1 truncate text-xs text-[var(--color-text-secondary)]">
+                {{ file.name }}
+              </p>
+            }
+          </div>
+        </div>
+
+        <label class="mt-3 block text-sm font-medium">Nombre</label>
+        <input
+          type="text"
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="store.manageGivenName()"
+          (ngModelChange)="store.manageGivenName.set($event)"
+        />
+
+        <label class="mt-3 block text-sm font-medium">Apellidos</label>
+        <input
+          type="text"
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="store.manageFamilyName()"
+          (ngModelChange)="store.manageFamilyName.set($event)"
+        />
+
+        <label class="mt-3 block text-sm font-medium">Member type</label>
         <select
           class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
-          [ngModel]="store.manageRoleId()"
-          (ngModelChange)="store.manageRoleId.set($event)"
+          [ngModel]="store.manageMemberType()"
+          (ngModelChange)="store.manageMemberType.set($event)"
         >
-          @for (r of store.tenantRoles(); track r.id) {
-            <option [value]="r.id">{{ r.name }} ({{ r.code }})</option>
-          }
+          <option value="member">member</option>
+          <option value="owner">owner</option>
         </select>
+
+        <label class="mt-3 flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            [ngModel]="store.manageActive()"
+            (ngModelChange)="store.manageActive.set($event)"
+          />
+          Active in this tenant
+        </label>
       }
+
+      @if (store.canManageRoles() && store.manageMemberType() !== 'owner') {
+        <h3 class="mt-5 text-sm font-semibold">Roles</h3>
+        @if (store.manageBusy() && !store.tenantRoles().length) {
+          <p class="mt-2 text-sm text-[var(--color-text-secondary)]">Loading roles…</p>
+        } @else if (store.tenantRoles().length === 0 && !store.manageBusy()) {
+          <p class="mt-2 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
+        } @else {
+          <ul class="mt-2 space-y-2">
+            @for (r of store.tenantRoles(); track r.id) {
+              <li>
+                <label class="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    [checked]="store.manageRoleIds().includes(r.id)"
+                    (change)="
+                      store.toggleManageRole(r.id, $any($event.target).checked)
+                    "
+                  />
+                  <span>{{ r.name }}</span>
+                  <span class="text-xs text-[var(--color-text-secondary)]">({{ r.code }})</span>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+      }
+
       @if (store.manageError(); as me) {
         <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ me }}</p>
       }
@@ -195,11 +310,11 @@
         </button>
         <button
           type="button"
-          [disabled]="store.manageBusy() || !store.manageRoleId()"
-          (click)="submitAssignRole()"
+          [disabled]="store.manageBusy()"
+          (click)="submitManage()"
           class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
         >
-          Assign role
+          {{ store.manageBusy() ? 'Saving…' : 'Save' }}
         </button>
       </div>
     </div>

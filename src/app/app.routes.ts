@@ -1,7 +1,9 @@
 import { Routes } from '@angular/router';
 import { permissionGuard } from './core/auth/permission.guard';
 import { authGuard } from './core/guards/auth.guard';
+import { memberProfileOnboardingGuard } from './core/guards/member-profile-onboarding.guard';
 import { onboardingGuard } from './core/guards/onboarding.guard';
+import { superAdminGuard } from './core/guards/super-admin.guard';
 import { tenantContextGuard } from './core/guards/tenant-context.guard';
 import { AppShellPageComponent } from './features/app-shell';
 
@@ -32,8 +34,23 @@ export const routes: Routes = [
       import('./features/accept-invitation/routes').then(m => m.acceptInvitationRoutes)
   },
   {
+    path: 'onboarding/create-tenant',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/onboarding-create-tenant/routes').then(
+        (m) => m.onboardingCreateTenantRoutes
+      ),
+  },
+  {
+    path: 'onboarding/complete-profile',
+    loadChildren: () =>
+      import('./features/onboarding-complete-profile/routes').then(
+        (m) => m.onboardingCompleteProfileRoutes
+      ),
+  },
+  {
     path: '',
-    canActivate: [authGuard, tenantContextGuard],
+    canActivate: [authGuard, tenantContextGuard, memberProfileOnboardingGuard],
     component: AppShellPageComponent,
     children: [
       {
@@ -42,27 +59,28 @@ export const routes: Routes = [
           import('./features/tenant-select/routes').then(m => m.tenantSelectRoutes)
       },
       {
-        path: 'onboarding/create-tenant',
-        loadChildren: () =>
-          import('./features/onboarding-create-tenant/routes').then(m => m.onboardingCreateTenantRoutes)
-      },
-      {
         path: '',
         canActivate: [onboardingGuard],
         loadChildren: () =>
           import('./features/home/routes').then(m => m.homeRoutes)
       },
       {
+        path: 'profile',
+        canActivate: [onboardingGuard],
+        loadChildren: () =>
+          import('./features/profile/routes').then((m) => m.profileRoutes),
+      },
+      {
         path: 'settings',
         canActivate: [onboardingGuard, permissionGuard],
-        data: { permission: 'tenant.settings.read' },
+        data: { permission: 'settings.read' },
         loadChildren: () =>
           import('./features/settings/routes').then(m => m.settingsRoutes),
       },
       {
         path: 'members',
         canActivate: [onboardingGuard, permissionGuard],
-        data: { permission: 'tenant.members.read' },
+        data: { permission: 'members.read' },
         loadComponent: () =>
           import('./features/members/members.component').then(m => m.MembersComponent),
       },
@@ -74,10 +92,23 @@ export const routes: Routes = [
       {
         path: 'roles',
         canActivate: [onboardingGuard, permissionGuard],
-        data: { permission: 'tenant.roles.read' },
+        data: { permission: 'roles.read' },
         loadChildren: () =>
           import('./features/roles/routes').then(m => m.rolesRoutes),
-      }
+      },
+      {
+        path: 'features-plans',
+        canActivate: [onboardingGuard, superAdminGuard],
+        loadChildren: () =>
+          import('./features/features-plans/routes').then(
+            (m) => m.featuresPlansRoutes
+          ),
+      },
+      {
+        path: 'platform',
+        redirectTo: 'features-plans',
+        pathMatch: 'full',
+      },
     ]
   },
   { path: '**', redirectTo: '' }

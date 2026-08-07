@@ -4,17 +4,32 @@
   @if (!token()) {
     <p class="mt-2 text-sm">Missing invitation token in the link.</p>
     <a class="mt-4 inline-block underline" routerLink="/login">Go to login</a>
+  } @else if (redirectingToLogin()) {
+    <p class="mt-2 text-sm">Signing out and redirecting to login…</p>
   } @else if (store.isLoading()) {
     <p class="mt-2 text-sm">Accepting invitation…</p>
   } @else if (store.error()) {
     <p class="mt-2 text-sm">{{ store.error()!.message }}</p>
-    <button
-      type="button"
-      class="mt-4 rounded border border-[var(--color-border-default)] px-3 py-2"
-      (click)="retry()"
-    >
-      Try again
-    </button>
+    @if (isEmailMismatch()) {
+      <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+        Cierra sesión e inicia con el email al que se envió la invitación.
+      </p>
+      <button
+        type="button"
+        class="mt-4 rounded border border-[var(--color-border-default)] px-3 py-2"
+        (click)="signOutAndContinue()"
+      >
+        Cerrar sesión y continuar
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="mt-4 rounded border border-[var(--color-border-default)] px-3 py-2"
+        (click)="retry()"
+      >
+        Try again
+      </button>
+    }
   } @else if (store.successTenantId()) {
     <p class="mt-2 text-sm">Invitation accepted. Redirecting…</p>
   }

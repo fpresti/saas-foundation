@@ -4,9 +4,13 @@
  */
 export interface MemberListItem {
   userId: string;
-  fullName: string | null;
+  email: string | null;
+  givenName: string | null;
+  familyName: string | null;
   avatarUrl: string | null;
   memberType: 'owner' | 'member';
+  active: boolean;
+  roleIds: string[];
   roleNames: string[];
   roleCodes: string[];
 }
@@ -15,18 +19,25 @@ export interface MemberListItem {
 export type MemberTableRow = {
   id: string;
   avatarUrl: string | null;
-  displayName: string;
+  givenName: string;
+  familyName: string;
+  email: string;
   memberType: string;
+  statusLabel: string;
   rolesLabel: string;
+  active: boolean;
 } & Record<string, unknown>;
 
 export function toMemberTableRow(item: MemberListItem): MemberTableRow {
   return {
     id: item.userId,
     avatarUrl: item.avatarUrl,
-    displayName: item.fullName?.trim() || item.userId,
+    givenName: item.givenName?.trim() || '—',
+    familyName: item.familyName?.trim() || '—',
+    email: item.email ?? '—',
     memberType: item.memberType,
-    rolesLabel:
-      item.roleNames.length > 0 ? item.roleNames.join(', ') : '—',
+    statusLabel: item.active ? 'Active' : 'Inactive',
+    rolesLabel: item.roleNames.length > 0 ? item.roleNames.join(', ') : '—',
+    active: item.active,
   } as MemberTableRow;
 }

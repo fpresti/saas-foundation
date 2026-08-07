@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { SupabaseService } from '../../core/supabase/supabase.service';
-import { normalizeError } from '../../core/utils/supabase-error.util';
+import { normalizeError, extractEdgeFunctionError } from '../../core/utils/supabase-error.util';
 import type { MemberListItem } from './members.view-model';
 
 export type TenantRoleOption = { id: string; code: string; name: string };
@@ -9,9 +9,7 @@ export type CreateInvitationResult = {
   invitation_id: string;
   email: string;
   expires_at: string;
-  member_type: string;
   tenant_id: string;
-  token: string;
 };
 
 export type PendingInvitation = {
@@ -30,17 +28,15 @@ export class MembersService {
    * metadata, and profiles. One list item per member (roles aggregated).
    */
   async loadMembersForTenant(tenantId: string): Promise<MemberListItem[]> {
-    const { data: memberRows, error: errMembers } = await this.supabase
-      .from('tenant_members')
-      .select('user_id, member_type')
-      .eq('tenant_id', tenantId);
+    const { data: memberRows, error: errMembers } = await this.supabase.rpc(
+      'list_tenant_members',
+      { p_tenant_id: tenantId }
+    );
 
     const n1 = normalizeError(errMembers);
     if (n1) throw n1;
     const members = memberRows ?? [];
     if (members.length === 0) return [];
-
-    const userIds = members.map((m) => m.user_id);
 
     const { data: tmrRows, error: errTmr } = await this.supabase
       .from('tenant_member_roles')
@@ -68,34 +64,20 @@ export class MembersService {
       }
     }
 
-    const { data: profileRows, error: errProfiles } = await this.supabase
-      .from('profiles')
-      .select('user_id, full_name, avatar_url')
-      .in('user_id', userIds);
-
-    const n4 = normalizeError(errProfiles);
-    if (n4) throw n4;
-    const profileByUser = new Map<
+    const rolesByUser = new Map<
       string,
-      { full_name: string | null; avatar_url: string | null }
+      { ids: string[]; names: string[]; codes: string[] }
     >();
-    for (const p of profileRows ?? []) {
-      profileByUser.set(p.user_id, {
-        full_name: p.full_name,
-        avatar_url: p.avatar_url,
-      });
-    }
-
-    const rolesByUser = new Map<string, { names: string[]; codes: string[] }>();
     for (const row of tmr) {
       const meta = roleById.get(row.role_id);
       if (!meta) continue;
       let bucket = rolesByUser.get(row.user_id);
       if (!bucket) {
-        bucket = { names: [], codes: [] };
+        bucket = { ids: [], names: [], codes: [] };
         rolesByUser.set(row.user_id, bucket);
       }
-      if (!bucket.codes.includes(meta.code)) {
+      if (!bucket.ids.includes(row.role_id)) {
+        bucket.ids.push(row.role_id);
         bucket.codes.push(meta.code);
         bucket.names.push(meta.name);
       }
@@ -105,21 +87,27 @@ export class MembersService {
     for (const m of members) {
       const memberType: 'owner' | 'member' =
         m.member_type === 'owner' ? 'owner' : 'member';
-      const profile = profileByUser.get(m.user_id);
-      const roles = rolesByUser.get(m.user_id) ?? { names: [], codes: [] };
+      const roles = rolesByUser.get(m.user_id) ?? { ids: [], names: [], codes: [] };
       result.push({
         userId: m.user_id,
-        fullName: profile?.full_name ?? null,
-        avatarUrl: profile?.avatar_url ?? null,
+        email: m.email ?? null,
+        givenName: m.given_name ?? null,
+        familyName: m.family_name ?? null,
+        avatarUrl: m.avatar_url ?? null,
         memberType,
+        active: m.active !== false,
+        roleIds: [...roles.ids],
         roleNames: [...roles.names],
         roleCodes: [...roles.codes],
       });
     }
 
-    result.sort((a, b) =>
-      (a.fullName || a.userId).localeCompare(b.fullName || b.userId)
-    );
+    result.sort((a, b) => {
+      if (a.active !== b.active) return a.active ? -1 : 1;
+      const left = [a.givenName, a.familyName].filter(Boolean).join(' ') || a.email || a.userId;
+      const right = [b.givenName, b.familyName].filter(Boolean).join(' ') || b.email || b.userId;
+      return left.localeCompare(right);
+    });
     return result;
   }
 
@@ -142,42 +130,128 @@ export class MembersService {
   async createInvitation(params: {
     tenantId: string;
     email: string;
-    memberType?: string;
     expiresInHours?: number;
   }): Promise<CreateInvitationResult> {
-    const { data, error } = await this.supabase.rpc('create_invitation', {
-      p_tenant_id: params.tenantId,
-      p_email: params.email.trim(),
-      p_member_type: params.memberType ?? 'member',
-      p_expires_in_hours: params.expiresInHours ?? 72,
+    const { data, error } = await this.supabase.functions.invoke('invite-member', {
+      body: {
+        tenantId: params.tenantId,
+        email: params.email.trim(),
+        expiresInHours: params.expiresInHours ?? 72,
+      },
     });
 
-    const n = normalizeError(error);
-    if (n) throw n;
-    const row = data?.[0];
-    if (!row) {
-      throw { message: 'No invitation returned', code: 'empty' };
+    if (error) {
+      throw await extractEdgeFunctionError(error, data, 'Invitation failed.');
     }
-    return {
-      invitation_id: row.invitation_id,
-      email: row.email,
-      expires_at: row.expires_at,
-      member_type: row.member_type,
-      tenant_id: row.tenant_id,
-      token: row.token,
-    };
+
+    const row = data as CreateInvitationResult | null;
+    if (!row?.invitation_id) {
+      throw await extractEdgeFunctionError(null, data, 'No invitation returned');
+    }
+
+    return row;
   }
 
-  async assignTenantUserRole(params: {
+  async revokeInvitation(params: {
+    tenantId: string;
+    invitationId: string;
+  }): Promise<void> {
+    const { error } = await this.supabase.rpc('revoke_invitation', {
+      p_invitation_id: params.invitationId,
+    });
+    const n = normalizeError(error);
+    if (n) throw n;
+  }
+
+  async resendInvitation(params: {
+    tenantId: string;
+    invitationId: string;
+  }): Promise<CreateInvitationResult> {
+    const { data, error } = await this.supabase.functions.invoke('resend-invitation', {
+      body: {
+        invitationId: params.invitationId,
+        tenantId: params.tenantId,
+      },
+    });
+
+    if (error) {
+      throw await extractEdgeFunctionError(error, data, 'Resend failed.');
+    }
+
+    const row = data as CreateInvitationResult | null;
+    if (!row?.invitation_id) {
+      throw await extractEdgeFunctionError(null, data, 'Invitation not resent');
+    }
+
+    return row;
+  }
+
+  /** Replace the full set of roles for a member (multi-rol). */
+  async setTenantMemberRoles(params: {
     tenantId: string;
     userId: string;
-    roleId: string;
+    roleIds: string[];
   }): Promise<void> {
-    const { error } = await this.supabase.rpc('assign_tenant_user_role', {
+    const { error } = await this.supabase.rpc('set_tenant_member_roles', {
       p_tenant_id: params.tenantId,
       p_user_id: params.userId,
-      p_role_id: params.roleId,
+      p_role_ids: params.roleIds,
     });
+    const n = normalizeError(error);
+    if (n) throw n;
+  }
+
+  async setMemberType(params: {
+    tenantId: string;
+    userId: string;
+    memberType: 'owner' | 'member';
+  }): Promise<void> {
+    const { error } = await this.supabase.rpc('set_tenant_member_type', {
+      p_tenant_id: params.tenantId,
+      p_user_id: params.userId,
+      p_member_type: params.memberType,
+    });
+    const n = normalizeError(error);
+    if (n) throw n;
+  }
+
+  async setMemberActive(params: {
+    tenantId: string;
+    userId: string;
+    active: boolean;
+  }): Promise<void> {
+    const { error } = await this.supabase.rpc('set_tenant_member_active', {
+      p_tenant_id: params.tenantId,
+      p_user_id: params.userId,
+      p_active: params.active,
+    });
+    const n = normalizeError(error);
+    if (n) throw n;
+  }
+
+  async updateMemberProfile(params: {
+    tenantId: string;
+    userId: string;
+    givenName: string;
+    familyName: string;
+    avatarUrl?: string | null;
+  }): Promise<void> {
+    const args: {
+      p_tenant_id: string;
+      p_user_id: string;
+      p_given_name: string;
+      p_family_name: string;
+      p_avatar_url?: string;
+    } = {
+      p_tenant_id: params.tenantId,
+      p_user_id: params.userId,
+      p_given_name: params.givenName,
+      p_family_name: params.familyName,
+    };
+    if (params.avatarUrl) {
+      args.p_avatar_url = params.avatarUrl;
+    }
+    const { error } = await this.supabase.rpc('update_tenant_member_profile', args);
     const n = normalizeError(error);
     if (n) throw n;
   }

@@ -4,6 +4,7 @@ import type { NormalizedError } from '../utils/supabase-error.util';
 import { AccessContextStore } from '../../features/access-context';
 import { AuthService } from './auth.service';
 import { logBootstrap } from './bootstrap-debug.log';
+import { membershipDeactivatedError } from './membership-deactivated';
 
 /**
  * @deprecated Internal only. Use {@link SessionStore} as the public state entry point for session + access context.
@@ -14,6 +15,7 @@ export class AuthStore {
   private readonly accessContextStore = inject(AccessContextStore);
 
   private unsubscribeAuthChanges: (() => void) | null = null;
+  private initPromise: Promise<void> | null = null;
 
   readonly session = signal<Session | null>(null);
   readonly isLoading = signal<boolean>(true);
@@ -22,11 +24,19 @@ export class AuthStore {
   readonly isAuthenticated = computed(() => this.session() !== null);
 
   async initialize(): Promise<void> {
-    // prevent double init (HMR / accidental re-call)
+    if (this.initPromise) {
+      return this.initPromise;
+    }
+    this.initPromise = this.runInitialize();
+    return this.initPromise;
+  }
+
+  private async runInitialize(): Promise<void> {
     if (this.unsubscribeAuthChanges) return;
 
     this.isLoading.set(true);
     try {
+      await this.authService.initializeAuth();
       const session = await this.authService.getSession();
       this.session.set(session);
       logBootstrap('AuthStore.initialize getSession', {
@@ -47,7 +57,7 @@ export class AuthStore {
           // Solo cargar en idle: si status es error, cada TOKEN_REFRESHED re-disparaba load() → bucle + lentitud.
           if (st === 'idle') {
             logBootstrap('Scheduling accessContext.load() from onAuthStateChange (idle)');
-            void this.accessContextStore.load();
+            void this.loadAccessContextRejectingDeactivated();
           }
         }
       });
@@ -71,7 +81,8 @@ export class AuthStore {
     this.session.set(result.session);
     // Load access context so protected routes can render (app waits for status === 'ready').
     if (result.session) {
-      await this.accessContextStore.load();
+      const allowed = await this.loadAccessContextRejectingDeactivated();
+      if (!allowed) return false;
     }
     return true;
   }
@@ -80,5 +91,21 @@ export class AuthStore {
     this.signInError.set(null);
     await this.authService.signOut();
     // Do not set session here; onAuthStateChange will update it.
+  }
+
+  /**
+   * Load access context; if the user is deactivated in all tenants, sign out and set signInError.
+   * @returns false when the session was rejected for deactivation.
+   */
+  async loadAccessContextRejectingDeactivated(tenantId?: string | null): Promise<boolean> {
+    await this.accessContextStore.load(tenantId);
+    if (!this.accessContextStore.context()?.membership_deactivated) {
+      return true;
+    }
+    await this.authService.signOut();
+    this.session.set(null);
+    this.accessContextStore.reset();
+    this.signInError.set(membershipDeactivatedError());
+    return false;
   }
 }

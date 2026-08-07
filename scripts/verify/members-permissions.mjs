@@ -4,17 +4,47 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ok, fail } from './_lib.mjs';
 
-const file = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '../../src/app/features/members/members.permissions.ts'
+const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
+const membersPerms = readFileSync(
+  join(root, 'src/app/features/members/members.permissions.ts'),
+  'utf8'
 );
-const src = readFileSync(file, 'utf8');
+const routes = readFileSync(join(root, 'src/app/app.routes.ts'), 'utf8');
+const nav = readFileSync(
+  join(root, 'src/app/features/app-shell/services/navigation.service.ts'),
+  'utf8'
+);
 
-if (src.includes('tenant.members.manage')) {
-  fail('members.permissions still uses tenant.members.manage');
+const legacy = [
+  'tenant.members.manage',
+  'tenant.roles.assign',
+  'tenant.permissions.read',
+  'tenant.roles.read',
+];
+for (const code of legacy) {
+  if (membersPerms.includes(code) || routes.includes(code) || nav.includes(code)) {
+    fail(`legacy permission code still present: ${code}`);
+  }
 }
-if (!src.includes('tenant.roles.assign')) {
-  fail('members.permissions must use tenant.roles.assign');
+
+for (const code of ['members.read', 'members.invite', 'roles.assign']) {
+  if (!membersPerms.includes(code)) {
+    fail(`members.permissions must use ${code}`);
+  }
 }
-ok('permission codes aligned');
+
+if (!routes.includes("permission: 'members.read'")) {
+  fail('members route must gate with members.read');
+}
+if (!routes.includes("permission: 'settings.read'")) {
+  fail('settings route must gate with settings.read');
+}
+if (routes.includes('tenantOwnerGuard')) {
+  fail('Members/Settings must not use tenantOwnerGuard (permission-based access)');
+}
+if (nav.includes('requiresOwner: true')) {
+  fail('nav Settings/Members must not require owner (permission-based)');
+}
+
+ok('permission codes and route/nav gates aligned');
 console.log('verify:members-permissions passed');

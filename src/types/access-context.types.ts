@@ -23,6 +23,8 @@ export interface AccessContext {
   tenant_role: 'owner' | 'member' | null;
   tenant_status: string | null;
   allowed_tenants: AllowedTenant[];
+  /** True when the user has memberships but none are active (and no pending invite). */
+  membership_deactivated: boolean;
 }
 
 export type AccessContextStatus = 'idle' | 'loading' | 'ready' | 'error';

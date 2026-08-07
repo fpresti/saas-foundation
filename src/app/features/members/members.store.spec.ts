@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { MembersStore } from './members.store';
 import { MembersService } from './members.service';
 import { PermissionService } from '../../core/auth/permission.service';
+import { SessionStore } from '../../core/auth/session.store';
+import { ProfileService } from '../../core/profile/profile.service';
 import { AppResetService } from '../../core/services/app-reset.service';
 import { MEMBERS_PERMISSION } from './members.permissions';
 
@@ -13,6 +15,7 @@ describe('MembersStore', () => {
     createInvitation: ReturnType<typeof vi.fn>;
     listRolesForTenant: ReturnType<typeof vi.fn>;
     assignTenantUserRole: ReturnType<typeof vi.fn>;
+    setTenantMemberRoles: ReturnType<typeof vi.fn>;
   };
   let hasPermission: ReturnType<typeof vi.fn>;
 
@@ -20,9 +23,15 @@ describe('MembersStore', () => {
     membersService = {
       loadMembersForTenant: vi.fn().mockResolvedValue([]),
       listPendingInvitations: vi.fn().mockResolvedValue([]),
-      createInvitation: vi.fn(),
+      createInvitation: vi.fn().mockResolvedValue({
+        invitation_id: 'inv-1',
+        email: 'new@t.com',
+        expires_at: '2099-01-01',
+        tenant_id: 'tenant-abc',
+      }),
       listRolesForTenant: vi.fn(),
       assignTenantUserRole: vi.fn(),
+      setTenantMemberRoles: vi.fn(),
     };
     hasPermission = vi.fn().mockResolvedValue(false);
 
@@ -30,7 +39,15 @@ describe('MembersStore', () => {
       providers: [
         MembersStore,
         { provide: MembersService, useValue: membersService },
-        { provide: PermissionService, useValue: { hasPermission } },
+        {
+          provide: PermissionService,
+          useValue: { hasPermission, clearCache: vi.fn() },
+        },
+        {
+          provide: SessionStore,
+          useValue: { accessContext: () => ({ tenant_role: 'owner' }) },
+        },
+        { provide: ProfileService, useValue: { uploadAvatarForUser: vi.fn() } },
         { provide: AppResetService, useValue: { registerResettable: vi.fn() } },
       ],
     });
@@ -42,9 +59,13 @@ describe('MembersStore', () => {
     store.memberItems.set([
       {
         userId: 'u1',
-        fullName: 'A',
+        email: 'a@b.com',
+        givenName: 'A',
+        familyName: null,
         avatarUrl: null,
         memberType: 'member',
+        active: true,
+        roleIds: [],
         roleNames: [],
         roleCodes: [],
       },
@@ -72,11 +93,15 @@ describe('MembersStore', () => {
     membersService.loadMembersForTenant.mockResolvedValue([
       {
         userId: 'u1',
-        fullName: 'Owner',
+        email: 'owner@t.com',
+        givenName: 'Owner',
+        familyName: null,
         avatarUrl: null,
         memberType: 'owner',
-        roleNames: ['Admin'],
-        roleCodes: ['admin'],
+        active: true,
+        roleIds: [],
+        roleNames: ['Tenant manager'],
+        roleCodes: ['tenant_manager'],
       },
     ]);
     membersService.listPendingInvitations.mockResolvedValue([

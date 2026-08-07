@@ -11,7 +11,8 @@ function isTenantSelectionOrOnboardingPath(url: string): boolean {
   return (
     path === '/select-tenant' ||
     path.startsWith('/select-tenant/') ||
-    path.startsWith('/onboarding/create-tenant')
+    path.startsWith('/onboarding/create-tenant') ||
+    path.startsWith('/onboarding/complete-profile')
   );
 }
 
@@ -20,6 +21,10 @@ export const tenantContextGuard: CanActivateFn = async (route, state): Promise<b
   const router = inject(Router);
 
   await sessionStore.ensureAccessContextReady();
+
+  if (!sessionStore.isAuthenticated()) {
+    return router.createUrlTree(['/login'], { queryParams: { reason: 'deactivated' } });
+  }
 
   if (isTenantSelectionOrOnboardingPath(state.url)) {
     return true;
@@ -51,8 +56,11 @@ export const tenantContextGuard: CanActivateFn = async (route, state): Promise<b
     return true;
   }
 
-  // Authenticated but no tenant available (edge case)
+  // No tenant membership: onboarding for regular users, select-tenant for super_admin
   if (ctx && ctx.allowed_tenants.length === 0) {
+    if (!ctx.is_super_admin) {
+      return router.createUrlTree(['/onboarding/create-tenant']);
+    }
     return router.createUrlTree(['/select-tenant']);
   }
 

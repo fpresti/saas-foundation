@@ -1,0 +1,277 @@
+<div class="w-full max-w-5xl text-[var(--color-text-primary)]">
+  <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Features &amp; Plans</h1>
+      <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+        Superadmin catalog for plans, feature entitlements, and the global feature list.
+      </p>
+    </div>
+    @if (store.isSuperAdmin()) {
+      <div class="flex shrink-0 gap-2">
+        @if (store.tab() === 'plans') {
+          <button
+            type="button"
+            class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium"
+            (click)="store.openCreatePlan()"
+          >
+            New plan
+          </button>
+        }
+        @if (store.tab() === 'features') {
+          <button
+            type="button"
+            class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium"
+            (click)="store.openCreateFeature()"
+          >
+            New feature
+          </button>
+        }
+      </div>
+    }
+  </header>
+
+  <div class="mb-6 flex flex-wrap gap-2 text-sm" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+      [class.font-semibold]="store.tab() === 'plans'"
+      [attr.aria-selected]="store.tab() === 'plans'"
+      (click)="setTab('plans')"
+    >
+      Plans
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+      [class.font-semibold]="store.tab() === 'plan-features'"
+      [attr.aria-selected]="store.tab() === 'plan-features'"
+      (click)="setTab('plan-features')"
+    >
+      Plans &amp; Features
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+      [class.font-semibold]="store.tab() === 'features'"
+      [attr.aria-selected]="store.tab() === 'features'"
+      (click)="setTab('features')"
+    >
+      Features
+    </button>
+  </div>
+
+  @if (store.message(); as msg) {
+    <p class="mb-4 text-sm text-[var(--color-text-secondary)]" role="status">{{ msg }}</p>
+  }
+
+  @if (store.error(); as err) {
+    <div
+      class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 text-sm text-red-600 dark:text-red-400"
+      role="alert"
+    >
+      <p class="font-medium">Could not load data</p>
+      <p class="mt-1 opacity-90">{{ err.message }}</p>
+    </div>
+  } @else if (store.isLoading()) {
+    <div
+      class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-12 text-center text-sm text-[var(--color-text-secondary)]"
+      role="status"
+    >
+      Loading…
+    </div>
+  } @else if (store.tab() === 'plans') {
+    <app-data-table
+      [rows]="store.planRows()"
+      [columns]="planColumns"
+      [actions]="store.isSuperAdmin() ? planActions : []"
+      emptyTitle="No plans"
+      emptyDescription="The plan catalog is empty."
+    />
+  } @else if (store.tab() === 'plan-features') {
+    <app-data-table
+      [rows]="store.planFeatureRows()"
+      [columns]="planFeatureColumns"
+      [actions]="store.isSuperAdmin() ? planFeatureActions : []"
+      emptyTitle="No plans"
+      emptyDescription="Create plans first, then map features."
+    />
+  } @else if (store.tab() === 'features') {
+    <app-data-table
+      [rows]="store.featureRows()"
+      [columns]="featureColumns"
+      [actions]="store.isSuperAdmin() ? featureActions : []"
+      emptyTitle="No features"
+      emptyDescription="The global feature catalog is empty."
+    />
+  }
+</div>
+
+@if (store.planEditorOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    role="dialog"
+    aria-modal="true"
+    (click)="store.closePlanEditor()"
+  >
+    <div
+      class="w-full max-w-md rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5 text-[var(--color-text-primary)] shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="text-lg font-semibold">
+        {{ store.planEditorMode() === 'create' ? 'New plan' : 'Edit plan' }}
+      </h2>
+      <label class="mt-4 block text-sm font-medium">Name</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.planEditorName()"
+        (ngModelChange)="store.planEditorName.set($event)"
+      />
+      <label class="mt-3 block text-sm font-medium">Price</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        placeholder="e.g. 19.99 (leave blank for none)"
+        [ngModel]="store.planEditorPrice()"
+        (ngModelChange)="store.planEditorPrice.set($event)"
+      />
+      <label class="mt-3 block text-sm font-medium">Description</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.planEditorDescription()"
+        (ngModelChange)="store.planEditorDescription.set($event)"
+      />
+      @if (store.planEditorError(); as pe) {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ pe }}</p>
+      }
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+          (click)="store.closePlanEditor()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.busy()"
+          (click)="savePlan()"
+        >
+          {{ store.busy() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (store.pfEditorOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    role="dialog"
+    aria-modal="true"
+    (click)="store.closePfEditor()"
+  >
+    <div
+      class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5 text-[var(--color-text-primary)] shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="text-lg font-semibold">Features for {{ store.pfEditorPlanLabel() }}</h2>
+      <ul class="mt-4 max-h-80 space-y-2 overflow-y-auto text-sm">
+        @for (f of store.features(); track f.id) {
+          <li>
+            <label class="flex items-start gap-2">
+              <input
+                type="checkbox"
+                class="mt-0.5"
+                [checked]="store.pfEditorFeatureIds().includes(f.id)"
+                (change)="store.togglePfFeature(f.id, $any($event.target).checked)"
+              />
+              <span>
+                <span class="font-mono text-xs">{{ f.code }}</span>
+                <span class="block text-[var(--color-text-secondary)]">{{ f.name }}</span>
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+      @if (store.pfEditorError(); as pfe) {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ pfe }}</p>
+      }
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+          (click)="store.closePfEditor()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.busy()"
+          (click)="savePlanFeatures()"
+        >
+          {{ store.busy() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (store.featureEditorOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    role="dialog"
+    aria-modal="true"
+    (click)="store.closeFeatureEditor()"
+  >
+    <div
+      class="w-full max-w-md rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5 text-[var(--color-text-primary)] shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="text-lg font-semibold">
+        {{ store.featureEditorMode() === 'create' ? 'New feature' : 'Edit feature' }}
+      </h2>
+      <label class="mt-4 block text-sm font-medium">Code</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm font-mono"
+        [ngModel]="store.featureEditorCode()"
+        (ngModelChange)="store.featureEditorCode.set($event)"
+      />
+      <label class="mt-3 block text-sm font-medium">Name</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.featureEditorName()"
+        (ngModelChange)="store.featureEditorName.set($event)"
+      />
+      <label class="mt-3 block text-sm font-medium">Description</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.featureEditorDescription()"
+        (ngModelChange)="store.featureEditorDescription.set($event)"
+      />
+      @if (store.featureEditorError(); as fe) {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ fe }}</p>
+      }
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+          (click)="store.closeFeatureEditor()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.busy()"
+          (click)="saveFeature()"
+        >
+          {{ store.busy() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

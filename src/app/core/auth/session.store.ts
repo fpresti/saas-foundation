@@ -1,5 +1,6 @@
 import { computed, inject, Injectable } from '@angular/core';
 import { AccessContextStore } from '../../features/access-context';
+import { CurrentProfileStore } from '../profile/current-profile.store';
 import { logBootstrap } from './bootstrap-debug.log';
 import { AuthStore } from './auth.store';
 
@@ -19,6 +20,7 @@ import { AuthStore } from './auth.store';
 export class SessionStore {
   private readonly authStore = inject(AuthStore);
   private readonly accessContextStore = inject(AccessContextStore);
+  private readonly currentProfileStore = inject(CurrentProfileStore);
 
   /** Supabase session (owned by AuthStore). */
   readonly session = this.authStore.session;
@@ -48,6 +50,9 @@ export class SessionStore {
 
   readonly isAuthenticated = this.authStore.isAuthenticated;
 
+  /** True while Supabase auth session is being resolved (incl. magic-link callback). */
+  readonly authLoading = this.authStore.isLoading;
+
   readonly isSuperAdmin = computed(
     () => this.accessContextStore.context()?.is_super_admin ?? false
   );
@@ -67,6 +72,7 @@ export class SessionStore {
   /** Same as AuthStore.signOut (awaitable for shell logout + navigate). */
   async signOut(): Promise<void> {
     await this.authStore.signOut();
+    this.currentProfileStore.reset();
   }
 
   /** Password sign-in; loads access context on success (delegates to AuthStore). */
@@ -76,9 +82,10 @@ export class SessionStore {
 
   /**
    * Load access context from RPC. Omit tenantId for default/server context (e.g. after onboarding).
+   * Signs out if the user is membership-deactivated.
    */
   async loadAccessContext(tenantId?: string | null): Promise<void> {
-    await this.accessContextStore.load(tenantId);
+    await this.authStore.loadAccessContextRejectingDeactivated(tenantId);
   }
 
   /**
@@ -94,7 +101,7 @@ export class SessionStore {
     });
     if (authed) {
       try {
-        await this.accessContextStore.load();
+        await this.authStore.loadAccessContextRejectingDeactivated();
       } catch {
         logBootstrap('SessionStore.initialize load() failed (status should be error)');
       }
@@ -107,6 +114,15 @@ export class SessionStore {
     });
   }
 
+  /** Wait until Supabase auth init finishes (safe to call multiple times). */
+  async waitForAuthSettled(): Promise<void> {
+    await this.authStore.initialize();
+    const deadline = Date.now() + 10_000;
+    while (this.authStore.isLoading() && Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 50));
+    }
+  }
+
   /** Reload access context from RPC for the current active tenant id. */
   async refreshAccessContext(): Promise<void> {
     await this.loadAccessContext(this.activeTenantId());
@@ -115,7 +131,7 @@ export class SessionStore {
   /** Load access context once if not already ready (for guards after bootstrap). */
   async ensureAccessContextReady(): Promise<void> {
     if (this.accessContextStore.status() !== 'ready') {
-      await this.accessContextStore.load();
+      await this.authStore.loadAccessContextRejectingDeactivated();
     }
   }
 

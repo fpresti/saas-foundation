@@ -8,6 +8,7 @@ const steps = [
   'db-sync.mjs',
   'setup.mjs',
   'members-permissions.mjs',
+  'authz-gates.mjs',
   'tenant-onboarding.mjs',
   'invitations.mjs',
   'roles-read.mjs',

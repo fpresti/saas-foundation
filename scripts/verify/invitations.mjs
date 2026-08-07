@@ -24,6 +24,15 @@ async function main() {
   const tenantId = created?.[0]?.tenant_id;
   if (!tenantId) fail('no tenant for owner');
 
+  const { data: collabRole, error: collabErr } = await client
+    .from('roles')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('code', 'collaborator')
+    .maybeSingle();
+  if (collabErr) fail(collabErr.message);
+  if (!collabRole?.id) fail('tenant missing collaborator system role');
+
   const { data: inv, error: invErr } = await client.rpc('create_invitation', {
     p_tenant_id: tenantId,
     p_email: env.TEST_INVITEE_EMAIL,
@@ -53,6 +62,20 @@ async function main() {
     .eq('tenant_id', tenantId)
     .eq('user_id', userId);
   if (!members?.length) fail('invitee not in tenant_members');
+
+  // Invitee can read own tenant_member_roles rows; may not read roles catalog (no roles.read).
+  const { data: roleLinks, error: roleErr } = await client
+    .from('tenant_member_roles')
+    .select('role_id')
+    .eq('tenant_id', tenantId)
+    .eq('user_id', userId);
+  if (roleErr) fail(roleErr.message);
+  const roleIds = (roleLinks ?? []).map((r) => r.role_id);
+  if (!roleIds.includes(collabRole.id)) {
+    fail(
+      `invitee missing default collaborator role_id (got: ${roleIds.join(',') || 'none'})`
+    );
+  }
 
   ok(`invitation accepted for tenant ${tenantId}`);
   console.log('verify:invitations passed');

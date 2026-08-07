@@ -1,6 +1,6 @@
-<div class="mx-auto max-w-lg text-[var(--color-text-primary)]">
+<div class="w-full max-w-lg text-[var(--color-text-primary)]">
   <h1 class="text-2xl font-semibold">Settings</h1>
-  <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Tenant profile</p>
+  <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Datos de la organización (tenant)</p>
 
   @if (store.error(); as err) {
     <p class="mt-4 text-sm text-red-600 dark:text-red-400">{{ err.message }}</p>
@@ -25,6 +25,47 @@
         <dd>{{ t.taxId }}</dd>
       </div>
     </dl>
+
+    <section class="mt-10">
+      <h2 class="text-lg font-semibold">Plan</h2>
+      @if (store.subscription(); as sub) {
+        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
+          Current: <span class="font-medium text-[var(--color-text-primary)]">{{ sub.planName }}</span>
+          ({{ sub.status }})
+        </p>
+      } @else {
+        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">No subscription found.</p>
+      }
+
+      @if (store.isOwner()) {
+        <label class="mt-4 block text-sm font-medium">Change plan</label>
+        <select
+          class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+          [ngModel]="store.selectedPlanId()"
+          (ngModelChange)="store.selectedPlanId.set($event)"
+        >
+          @for (p of store.plans(); track p.id) {
+            <option [value]="p.id">
+              {{ p.name }}@if (p.price != null) { — {{ p.price }}}
+            </option>
+          }
+        </select>
+        @if (store.planError(); as pe) {
+          <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ pe }}</p>
+        }
+        @if (store.planMessage(); as pm) {
+          <p class="mt-2 text-sm text-[var(--color-text-secondary)]">{{ pm }}</p>
+        }
+        <button
+          type="button"
+          class="mt-3 rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.planBusy() || !store.selectedPlanId()"
+          (click)="changePlan()"
+        >
+          {{ store.planBusy() ? 'Updating…' : 'Save plan' }}
+        </button>
+      }
+    </section>
   } @else {
     <p class="mt-4 text-sm">No tenant data.</p>
   }

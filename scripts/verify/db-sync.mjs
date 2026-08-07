@@ -17,6 +17,19 @@ const EXPECTED_REMOTE = [
   { version: '20250315000000', name: 'seed_members_permissions' },
   { version: '20250626120000', name: 'security_hardening' },
   { version: '20250626121000', name: 'fix_accept_invitation' },
+  { version: '20250629120000', name: 'seed_default_tenant_roles' },
+  { version: '20250629130000', name: 'invitation_revoke_resend' },
+  { version: '20250713100000', name: 'list_tenant_members' },
+  { version: '20250713110000', name: 'invitations_pending_expired' },
+  { version: '20250713120000', name: 'accept_invitation_email_match' },
+  { version: '20260719125120', name: 'avatars_bucket_policies' },
+  { version: '20260719125158', name: 'profiles_given_family_name' },
+  { version: '20260719125538', name: 'avatars_select_own_only' },
+  { version: '20260719133814', name: 'members_owner_management' },
+  { version: '20260719133837', name: 'members_list_and_rpcs' },
+  { version: '20260719133847', name: 'avatars_owner_policies' },
+  { version: '20260719133856', name: 'members_access_context_active' },
+  { version: '20260719140133', name: 'block_deactivated_member_login' },
 ];
 
 function localMigrations() {

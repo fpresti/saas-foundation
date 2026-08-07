@@ -1,35 +1,46 @@
 <aside
-  class="hidden h-full min-h-screen w-14 shrink-0 flex-col items-center gap-1 border-r border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] py-4 md:flex"
+  class="flex h-full w-full shrink-0 flex-col items-center gap-1 bg-[var(--color-bg-secondary)] py-3 md:flex"
   role="navigation"
   aria-label="Icon navigation"
 >
+  <div class="flex size-10 items-center justify-center" [attr.aria-label]="profileLabel()">
+    <app-user-avatar
+      [src]="profileStore.avatarUrl()"
+      [initials]="profileStore.initials()"
+      size="md"
+    />
+  </div>
+
+  <div class="flex min-h-0 w-full flex-1 flex-col items-center gap-1 overflow-y-auto py-2">
+    @for (item of navStore.railItems(); track item.routerLink) {
+      @if (item.disabled) {
+        <span
+          class="flex size-10 items-center justify-center rounded opacity-50"
+          [attr.aria-label]="item.label"
+          [attr.aria-disabled]="true"
+        >
+          <app-nav-icon [icon]="item.icon" />
+        </span>
+      } @else {
+        <a
+          [routerLink]="item.routerLink"
+          routerLinkActive="nav-active"
+          [routerLinkActiveOptions]="{ exact: !!item.exact }"
+          class="flex size-10 items-center justify-center rounded"
+          [attr.aria-label]="item.label"
+        >
+          <app-nav-icon [icon]="item.icon" />
+        </a>
+      }
+    }
+  </div>
+
   <button
     type="button"
     (click)="layoutStore.toggleSidebar()"
-    class="rounded p-2 hover:bg-[var(--color-bg-primary)]"
+    class="mt-auto rounded p-2 hover:bg-[var(--color-bg-primary)]"
     aria-label="Expand navigation"
   >
     <app-nav-icon icon="chevron-right" />
   </button>
-  @for (item of navStore.railItems(); track item.routerLink) {
-    @if (item.disabled) {
-      <span
-        class="flex size-10 items-center justify-center rounded opacity-50"
-        [attr.aria-label]="item.label"
-        [attr.aria-disabled]="true"
-      >
-        <app-nav-icon [icon]="item.icon" />
-      </span>
-    } @else {
-      <a
-        [routerLink]="item.routerLink"
-        routerLinkActive="nav-active"
-        [routerLinkActiveOptions]="{ exact: !!item.exact }"
-        class="flex size-10 items-center justify-center rounded"
-        [attr.aria-label]="item.label"
-      >
-        <app-nav-icon [icon]="item.icon" />
-      </a>
-    }
-  }
 </aside>

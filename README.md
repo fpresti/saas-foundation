@@ -48,10 +48,23 @@ npx supabase link --project-ref ynwlidadbattxknclxyd
 npm run supabase:types
 ```
 
+### Invitation emails (Edge Function `invite-member`)
+
+Set secrets in Supabase Dashboard → Edge Functions → `invite-member`:
+
+| Secret | Purpose |
+|--------|---------|
+| `RESEND_API_KEY` | Resend API key (if unset, invitation is created but URL is only logged) |
+| `APP_URL` | Base URL for accept links (e.g. `http://localhost:4200`) |
+| `INVITE_FROM_EMAIL` | Sender address (Resend verified domain) |
+
+`resend-invitation` uses the same secrets for Re-send on pending invitations.
+
 ## Docs
 
 - [AI_PLAYBOOK.md](./AI_PLAYBOOK.md) — architecture rules
 - [docs/FEATURES.md](./docs/FEATURES.md) — feature scaffold pattern
+- [docs/ROLES.md](./docs/ROLES.md) — memberships, roles, permissions
 
 ## Build & test
 

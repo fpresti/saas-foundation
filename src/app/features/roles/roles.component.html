@@ -1,35 +1,298 @@
-<div class="mx-auto max-w-3xl text-[var(--color-text-primary)]">
-  <h1 class="text-2xl font-semibold">Roles</h1>
-  <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
-    Tenant roles and assigned permissions (read-only).
-  </p>
+<div class="w-full max-w-5xl text-[var(--color-text-primary)]">
+  <header class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold tracking-tight">Roles &amp; permissions</h1>
+      <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+        @if (store.isSuperAdmin()) {
+          Superadmin can create and edit roles, role–permission links, and the permission catalog.
+        } @else {
+          Read-only view of tenant roles. Assign roles to members from Members.
+        }
+      </p>
+    </div>
+    @if (store.isSuperAdmin()) {
+      <div class="flex shrink-0 gap-2">
+        @if (store.tab() === 'roles') {
+          <button
+            type="button"
+            class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium"
+            (click)="store.openCreateRole()"
+          >
+            New role
+          </button>
+        }
+        @if (store.tab() === 'permissions') {
+          <button
+            type="button"
+            class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] px-4 py-2 text-sm font-medium"
+            (click)="store.openCreatePermission()"
+          >
+            New permission
+          </button>
+        }
+      </div>
+    }
+  </header>
+
+  <div class="mb-6 flex flex-wrap gap-2 text-sm" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+      [class.font-semibold]="store.tab() === 'roles'"
+      [attr.aria-selected]="store.tab() === 'roles'"
+      (click)="setTab('roles')"
+    >
+      Roles
+    </button>
+    @if (store.isSuperAdmin()) {
+      <button
+        type="button"
+        role="tab"
+        class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+        [class.font-semibold]="store.tab() === 'role-permissions'"
+        [attr.aria-selected]="store.tab() === 'role-permissions'"
+        (click)="setTab('role-permissions')"
+      >
+        Roles &amp; Permissions
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="rounded border border-[var(--color-border-default)] px-3 py-1.5"
+        [class.font-semibold]="store.tab() === 'permissions'"
+        [attr.aria-selected]="store.tab() === 'permissions'"
+        (click)="setTab('permissions')"
+      >
+        Permissions
+      </button>
+    }
+  </div>
+
+  @if (store.message(); as msg) {
+    <p class="mb-4 text-sm text-[var(--color-text-secondary)]" role="status">{{ msg }}</p>
+  }
 
   @if (store.error(); as err) {
-    <p class="mt-4 text-sm text-red-600 dark:text-red-400">{{ err.message }}</p>
+    <div
+      class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-6 text-sm text-red-600 dark:text-red-400"
+      role="alert"
+    >
+      <p class="font-medium">Could not load data</p>
+      <p class="mt-1 opacity-90">{{ err.message }}</p>
+    </div>
   } @else if (store.isLoading()) {
-    <p class="mt-4 text-sm">Loading roles…</p>
-  } @else if (store.roles().length === 0) {
-    <p class="mt-4 text-sm text-[var(--color-text-secondary)]">No roles for this tenant.</p>
-  } @else {
-    <ul class="mt-6 space-y-4">
-      @for (role of store.roles(); track role.id) {
-        <li class="rounded border border-[var(--color-border-default)] p-4">
-          <div class="flex flex-wrap items-baseline justify-between gap-2">
-            <span class="font-medium">{{ role.name }}</span>
-            <span class="text-xs text-[var(--color-text-secondary)]">{{ role.code }}</span>
-          </div>
-          @if (role.description) {
-            <p class="mt-1 text-sm text-[var(--color-text-secondary)]">{{ role.description }}</p>
-          }
-          @if (role.permissionCodes.length) {
-            <p class="mt-2 text-xs text-[var(--color-text-secondary)]">
-              Permissions: {{ role.permissionCodes.join(', ') }}
-            </p>
-          } @else {
-            <p class="mt-2 text-xs text-[var(--color-text-secondary)]">No permissions assigned.</p>
-          }
-        </li>
-      }
-    </ul>
+    <div
+      class="rounded border border-[var(--color-border-default)] bg-[var(--color-bg-secondary)] p-12 text-center text-sm text-[var(--color-text-secondary)]"
+      role="status"
+    >
+      Loading…
+    </div>
+  } @else if (store.tab() === 'roles') {
+    <app-data-table
+      [rows]="store.roleRows()"
+      [columns]="roleColumns"
+      [actions]="store.isSuperAdmin() ? roleActions : []"
+      emptyTitle="No roles"
+      emptyDescription="This tenant has no roles yet."
+    />
+  } @else if (store.tab() === 'role-permissions') {
+    <app-data-table
+      [rows]="store.roleRows()"
+      [columns]="rolePermColumns"
+      [actions]="rolePermActions"
+      emptyTitle="No roles"
+      emptyDescription="Create roles first, then map permissions."
+    />
+  } @else if (store.tab() === 'permissions') {
+    <app-data-table
+      [rows]="store.permissionRows()"
+      [columns]="permissionColumns"
+      [actions]="permissionActions"
+      emptyTitle="No permissions"
+      emptyDescription="The global permission catalog is empty."
+    />
   }
 </div>
+
+@if (store.roleEditorOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    role="dialog"
+    aria-modal="true"
+    (click)="store.closeRoleEditor()"
+  >
+    <div
+      class="w-full max-w-md rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5 text-[var(--color-text-primary)] shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="text-lg font-semibold">
+        {{ store.roleEditorMode() === 'create' ? 'New role' : 'Edit role' }}
+      </h2>
+      <label class="mt-4 block text-sm font-medium">Code</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.roleEditorCode()"
+        (ngModelChange)="store.roleEditorCode.set($event)"
+      />
+      <label class="mt-3 block text-sm font-medium">Name</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.roleEditorName()"
+        (ngModelChange)="store.roleEditorName.set($event)"
+      />
+      <label class="mt-3 block text-sm font-medium">Description</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.roleEditorDescription()"
+        (ngModelChange)="store.roleEditorDescription.set($event)"
+      />
+      @if (store.roleEditorError(); as re) {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ re }}</p>
+      }
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+          (click)="store.closeRoleEditor()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.busy()"
+          (click)="saveRole()"
+        >
+          {{ store.busy() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (store.rpEditorOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    role="dialog"
+    aria-modal="true"
+    (click)="store.closeRpEditor()"
+  >
+    <div
+      class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5 text-[var(--color-text-primary)] shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="text-lg font-semibold">Permissions for {{ store.rpEditorRoleLabel() }}</h2>
+      <ul class="mt-4 max-h-80 space-y-2 overflow-y-auto text-sm">
+        @for (p of store.permissions(); track p.id) {
+          <li>
+            <label class="flex items-start gap-2">
+              <input
+                type="checkbox"
+                class="mt-0.5"
+                [checked]="store.rpEditorPermissionIds().includes(p.id)"
+                (change)="store.toggleRpPermission(p.id, $any($event.target).checked)"
+              />
+              <span>
+                <span class="font-mono text-xs">{{ p.code }}</span>
+                <span class="block text-[var(--color-text-secondary)]">{{ p.name }}</span>
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+      @if (store.rpEditorError(); as rpe) {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ rpe }}</p>
+      }
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+          (click)="store.closeRpEditor()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.busy()"
+          (click)="saveRolePermissions()"
+        >
+          {{ store.busy() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (store.permEditorOpen()) {
+  <div
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+    role="dialog"
+    aria-modal="true"
+    (click)="store.closePermEditor()"
+  >
+    <div
+      class="w-full max-w-md rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5 text-[var(--color-text-primary)] shadow-lg"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 class="text-lg font-semibold">
+        {{ store.permEditorMode() === 'create' ? 'New permission' : 'Edit permission' }}
+      </h2>
+      <label class="mt-4 block text-sm font-medium">Feature</label>
+      <select
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.permEditorFeatureId()"
+        (ngModelChange)="store.permEditorFeatureId.set($event)"
+      >
+        <option value="">— Select feature —</option>
+        @for (f of store.features(); track f.id) {
+          <option [value]="f.id">{{ f.code }} — {{ f.name }}</option>
+        }
+      </select>
+      <label class="mt-3 block text-sm font-medium">Action</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm font-mono"
+        placeholder="e.g. read, invite, permissions_read"
+        [ngModel]="store.permEditorAction()"
+        (ngModelChange)="store.permEditorAction.set($event)"
+      />
+      <p class="mt-1 text-xs text-[var(--color-text-secondary)]">
+        Code:
+        <span class="font-mono">{{ store.permEditorCodePreview() || 'feature.action' }}</span>
+      </p>
+      <label class="mt-3 block text-sm font-medium">Name</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.permEditorName()"
+        (ngModelChange)="store.permEditorName.set($event)"
+      />
+      <label class="mt-3 block text-sm font-medium">Description</label>
+      <input
+        class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
+        [ngModel]="store.permEditorDescription()"
+        (ngModelChange)="store.permEditorDescription.set($event)"
+      />
+      @if (store.permEditorError(); as pe) {
+        <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ pe }}</p>
+      }
+      <div class="mt-4 flex justify-end gap-2">
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm"
+          (click)="store.closePermEditor()"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+          [disabled]="store.busy()"
+          (click)="savePermission()"
+        >
+          {{ store.busy() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
