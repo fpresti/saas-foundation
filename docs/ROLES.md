@@ -9,7 +9,7 @@ Security is enforced in **Postgres (RLS + RPC)**; the frontend only reflects per
 
 ### Product / entitlement
 
-`Tenant → Subscription → Plan → Features` (+ Billing hangs off Subscription in phase 2)
+`Tenant → Subscription → Plan → Features` (+ Billing hangs off Subscription — see `docs/BILLING.md`)
 
 ### Authorization
 
@@ -198,4 +198,4 @@ Optional: set `SUPABASE_SERVICE_ROLE_KEY` in `.env.test.local` so `verify:authz-
 
 ## 8) Related issues
 
-Epic: **#34** Planes + Features + RBAC. Phase 2 billing: #49–#51.
+Epic: **#34** Planes + Features + RBAC. Phase 2 billing: #49–#51 (`docs/BILLING.md`).
