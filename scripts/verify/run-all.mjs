@@ -9,6 +9,7 @@ const steps = [
   'setup.mjs',
   'members-permissions.mjs',
   'authz-gates.mjs',
+  'billing-schema.mjs',
   'tenant-onboarding.mjs',
   'invitations.mjs',
   'roles-read.mjs',

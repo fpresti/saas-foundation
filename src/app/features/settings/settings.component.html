@@ -27,18 +27,54 @@
     </dl>
 
     <section class="mt-10">
-      <h2 class="text-lg font-semibold">Plan</h2>
+      <h2 class="text-lg font-semibold">Subscription</h2>
       @if (store.subscription(); as sub) {
-        <p class="mt-2 text-sm text-[var(--color-text-secondary)]">
-          Current: <span class="font-medium text-[var(--color-text-primary)]">{{ sub.planName }}</span>
-          ({{ sub.status }})
-        </p>
+        <dl class="mt-3 space-y-2 text-sm">
+          <div>
+            <dt class="text-[var(--color-text-secondary)]">Plan</dt>
+            <dd class="font-medium">{{ sub.planName }}</dd>
+          </div>
+          <div>
+            <dt class="text-[var(--color-text-secondary)]">Status</dt>
+            <dd>{{ sub.status }}</dd>
+          </div>
+          @if (store.formatPeriodEnd(sub.currentPeriodEnd); as periodEnd) {
+            <div>
+              <dt class="text-[var(--color-text-secondary)]">Current period ends</dt>
+              <dd>{{ periodEnd }}</dd>
+            </div>
+          }
+          @if (sub.provider) {
+            <div>
+              <dt class="text-[var(--color-text-secondary)]">Billing provider</dt>
+              <dd>{{ sub.provider }}</dd>
+            </div>
+          }
+        </dl>
+
+        @if (store.statusWarning(); as warn) {
+          <p class="mt-3 text-sm text-amber-700 dark:text-amber-400">{{ warn }}</p>
+        }
+
+        @if (store.needsBillingSetup()) {
+          <p class="mt-3 text-sm text-[var(--color-text-secondary)]">
+            This plan is linked to Stripe, but billing is not set up yet for this tenant.
+          </p>
+          <button
+            type="button"
+            class="mt-2 rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            [disabled]="store.planBusy()"
+            (click)="setupBilling()"
+          >
+            {{ store.planBusy() ? 'Opening Checkout…' : 'Set up Stripe billing' }}
+          </button>
+        }
       } @else {
         <p class="mt-2 text-sm text-[var(--color-text-secondary)]">No subscription found.</p>
       }
 
       @if (store.isOwner()) {
-        <label class="mt-4 block text-sm font-medium">Change plan</label>
+        <label class="mt-6 block text-sm font-medium">Change plan</label>
         <select
           class="mt-1 w-full rounded border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm"
           [ngModel]="store.selectedPlanId()"
@@ -46,24 +82,42 @@
         >
           @for (p of store.plans(); track p.id) {
             <option [value]="p.id">
-              {{ p.name }}@if (p.price != null) { — {{ p.price }}}
+              {{ p.name }}@if (p.price != null) { — {{ p.price }}}@if (p.providerPriceId) { (Stripe)}
             </option>
           }
         </select>
+        <p class="mt-1 text-xs text-[var(--color-text-secondary)]">
+          Plans linked to Stripe open Checkout. Free/manual plans update entitlement only.
+        </p>
+
         @if (store.planError(); as pe) {
           <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ pe }}</p>
         }
         @if (store.planMessage(); as pm) {
           <p class="mt-2 text-sm text-[var(--color-text-secondary)]">{{ pm }}</p>
         }
-        <button
-          type="button"
-          class="mt-3 rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-          [disabled]="store.planBusy() || !store.selectedPlanId()"
-          (click)="changePlan()"
-        >
-          {{ store.planBusy() ? 'Updating…' : 'Save plan' }}
-        </button>
+
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+            [disabled]="store.planBusy() || !store.selectedPlanId()"
+            (click)="changePlan()"
+          >
+            {{ store.planBusy() ? 'Updating…' : 'Save plan' }}
+          </button>
+
+          @if (store.canOpenPortal()) {
+            <button
+              type="button"
+              class="rounded border border-[var(--color-border-default)] px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+              [disabled]="store.portalBusy()"
+              (click)="openPortal()"
+            >
+              {{ store.portalBusy() ? 'Opening…' : 'Manage billing' }}
+            </button>
+          }
+        </div>
       }
     </section>
   } @else {

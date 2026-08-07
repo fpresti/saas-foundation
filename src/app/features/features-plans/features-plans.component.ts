@@ -26,6 +26,7 @@ export class FeaturesPlansComponent implements OnInit {
   readonly planColumns: DataTableColumn<PlanTableRow>[] = [
     { key: 'name', header: 'Name' },
     { key: 'priceLabel', header: 'Price' },
+    { key: 'stripePriceLabel', header: 'Stripe price', hideOnMobile: true },
     { key: 'description', header: 'Description', hideOnMobile: true },
   ];
 

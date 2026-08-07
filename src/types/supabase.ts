@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_webhook_events: {
+        Row: {
+          event_id: string
+          event_type: string
+          id: string
+          payload: Json | null
+          processed_at: string
+          provider: string
+        }
+        Insert: {
+          event_id: string
+          event_type: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string
+          provider?: string
+        }
+        Update: {
+          event_id?: string
+          event_type?: string
+          id?: string
+          payload?: Json | null
+          processed_at?: string
+          provider?: string
+        }
+        Relationships: []
+      }
       feature_permissions: {
         Row: {
           created_at: string
@@ -124,6 +151,68 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          hosted_invoice_url: string | null
+          id: string
+          invoice_pdf_url: string | null
+          issued_at: string | null
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          provider: string | null
+          provider_invoice_id: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          hosted_invoice_url?: string | null
+          id?: string
+          invoice_pdf_url?: string | null
+          issued_at?: string | null
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          provider?: string | null
+          provider_invoice_id?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          hosted_invoice_url?: string | null
+          id?: string
+          invoice_pdf_url?: string | null
+          issued_at?: string | null
+          paid_at?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          provider?: string | null
+          provider_invoice_id?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           code: string
@@ -202,6 +291,7 @@ export type Database = {
           id: string
           name: string
           price: number | null
+          provider_price_id: string | null
           updated_at: string
         }
         Insert: {
@@ -210,6 +300,7 @@ export type Database = {
           id?: string
           name: string
           price?: number | null
+          provider_price_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -218,6 +309,7 @@ export type Database = {
           id?: string
           name?: string
           price?: number | null
+          provider_price_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -352,27 +444,39 @@ export type Database = {
       }
       subscriptions: {
         Row: {
+          billing_customer_id: string | null
+          canceled_at: string | null
           created_at: string
           current_period_end: string | null
           plan_id: string
+          provider: string | null
+          provider_subscription_id: string | null
           started_at: string
           status: string
           tenant_id: string
           updated_at: string
         }
         Insert: {
+          billing_customer_id?: string | null
+          canceled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           plan_id: string
+          provider?: string | null
+          provider_subscription_id?: string | null
           started_at?: string
           status?: string
           tenant_id: string
           updated_at?: string
         }
         Update: {
+          billing_customer_id?: string | null
+          canceled_at?: string | null
           created_at?: string
           current_period_end?: string | null
           plan_id?: string
+          provider?: string | null
+          provider_subscription_id?: string | null
           started_at?: string
           status?: string
           tenant_id?: string

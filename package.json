@@ -18,6 +18,7 @@
     "verify:invitations": "node scripts/verify/invitations.mjs",
     "verify:roles-read": "node scripts/verify/roles-read.mjs",
     "verify:authz-gates": "node scripts/verify/authz-gates.mjs",
+    "verify:billing-schema": "node scripts/verify/billing-schema.mjs",
     "verify:tenant-settings": "node scripts/verify/tenant-settings.mjs",
     "verify:all": "node scripts/verify/run-all.mjs"
   },
